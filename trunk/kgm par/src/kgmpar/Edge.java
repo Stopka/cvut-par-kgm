@@ -14,6 +14,7 @@ class Edge {
     private int end;
     private int start;
     private String name;
+
     Edge(int i, int j, String name) {
         start = i;
         end = j;
