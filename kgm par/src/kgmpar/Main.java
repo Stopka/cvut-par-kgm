@@ -7,8 +7,6 @@ package kgmpar;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Stack;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -22,6 +20,10 @@ public class Main {
     ArrayList<Edge> edges = new ArrayList();
     //pocet vrcholu grafu
     static int NUMBER_OF_VERTEX = 6;
+    //stupen kostry
+    private int minDegree = Integer.MAX_VALUE;
+    //hledana kostra s minimálním stupnem
+    private StackItem minSpanningTree = null;
 
     //pruchod do hloubky respektive do k hloubky, kde k je pocet hran kostry
     private void DFS(int k) {
@@ -31,20 +33,19 @@ public class Main {
             StackItem path = new StackItem(new LinkedList<Edge>());
             //vlozim hranu
             path.addEdge(e);
-
-            //musim nastavit u vrcholu, ktera hrana spojuje stupen na 1
-            //path.setVertexDegree(e.getStart(), 1);
-            //path.setVertexDegree(e.getEnd(), 1);
-            //a poslu na zasobnik
+            //a cestu v grafu vlozim na zasobnik
             stack.push(path);
         }
-
-        int degreeTemp = -1;
 
         //zacnu procházet cely prostor
         while (!stack.isEmpty()) {
             //vemu si cestu neboli vraceni se o uroven zpet
             StackItem path = stack.pop();
+            //kontrolni vypis stromu
+            //System.out.println("POP: " + path.toString() + " " + path.getMaxDegree());
+
+            //pomocna cesta
+            StackItem aaa = null;
 
             //projdu vsechny mozne cesty v grafu
             for (Edge e : edges) {
@@ -54,31 +55,62 @@ public class Main {
                 }
                 //pokud pridana hrana nevytvori cyklus
                 if (!isCycle(e, path)) {
-                    //netvori => muzeme hranu pridat do cesty
-                    path.addEdge(e);
 
-                    degreeTemp = path.getMaxDegree();
+                    // vytvorim novou cestou, kterou pozdeji ulozim na zasobnik
+                    //predam ji v konstruktoru dosavadni cestu
+                    aaa = new StackItem(path);
+                    //pridam zkoumanou hranu do cesty
+                    aaa.addEdge(e);
+                    //spocitam jeji stupen s novou hranou
+                    aaa.countDegree();
+                    
+                    /**kontrolni vypis
+                    System.out.println("Cesta: " + aaa);
+                    System.out.println("Ddegree" + aaa.getVertexArrayToString());
+                    */
+                     
+                    //zkoumam zda dana cesta nema vetsi stupen nez dosavadni nalezeny
+                    if (aaa.getMaxDegree() > minDegree) {
+                        //pokud ano, tak orezavam :)
+                        //System.out.println("Cesta " + aaa + " ma vetsi stupen nez nejmensi nalezeny");
+                        continue;
+                    }
 
-                    System.out.println("Kontrolni vypis");
-                    System.out.println("Cesta: " + path.toString());
-                    System.out.println("stupne: " + degreeTemp);
-                    System.out.println("----------------------");
+                    //pokud mam narok na kostru
+                    if (aaa.pathSize() == k) {
 
-                    //a celou cestu hodime na zasobnik
-                    stack.push(path);
+                        //zapamatuji si kostru
+                        if (aaa.getMaxDegree() < minDegree) {
+                            minDegree = aaa.getMaxDegree();
+                            minSpanningTree = aaa;
+                        }
+                        //kontrolni vypis
+                        //System.out.println("Kostra " + aaa.toString() + " stupen: " + aaa.getMaxDegree());
+                        //dal nemusim prohledavat strom => orezavan
+                        continue;
+                        //ne break, jelikoz ten zahodi celou hladinu
+                    } else {
+                        //nemam kostru tak pokracuji
+                        //kontrolni vypis prochazeneho stromu
+                        //System.out.println("Push: " + aaa.toString() + " " + aaa.getMaxDegree());
+
+                        //a celou cestu hodime na zasobnik
+                        stack.push(aaa);
+                    }
                 } else {
                     //tvori cyklus
-                    // Todo - oriznou vetec, nejspise by mel stacit return z for cyklu
-                }
+                    //System.out.println("Vetev: " + path.toString() + " s hranou: " + e.toString() + " tvori cyklus -> cut");
+                    //tato vetev, dal nevedete, ale porad mohou existovat jine moznosti v jinych vetvich
+                    //ktere musime dat na zasobnik
+                    continue;
 
-                //spocitat proztimni stupen kostry/cestsy
+                }
             }
-            //pokud mame k hran v ceste, meli bychom mit kostru
-            if (path.pathSize() == k) {
-                System.out.println("Kostra " + path.toString());
-                System.out.println("Stupen: " + degreeTemp);
-            }
+
         }
+       
+        System.out.println("Result:");
+        System.out.println("Kostra: " + minSpanningTree.toString() + "stupne: " + minSpanningTree.getMaxDegree());
     }
 
     /**
@@ -153,6 +185,8 @@ public class Main {
      * pridanim dalsi hrany do kostry se snizi pocet komponent souvislosti o 1.
      * Nove pridana hrana totiz musi spojovat dvojici vrchollu z dosud ruznych
      * ruznych koponenet souvislosti, jinak jeji zarazei vytvori cyklus.
+     *
+     * U tehle metody je prostor pro optimalizaci, ale nebudeme tak pilni :D
      *
      * @param e pridavana hrana
      * @param path nase doposud kostra
