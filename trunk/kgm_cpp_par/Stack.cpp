@@ -49,3 +49,14 @@ bool Stack::is_empty() const {
 int Stack::count() const {
     return size;
 }
+
+ostream& operator<<(ostream& os,const Stack& e){
+    os<<"|||||STACK||||||||"<<endl;
+    StackNode* node=e.first_node;
+    while(node!=NULL){
+        os<<*(node->content)<<endl;
+        node=node->next;
+    }
+    os<<endl;
+    return os;
+}

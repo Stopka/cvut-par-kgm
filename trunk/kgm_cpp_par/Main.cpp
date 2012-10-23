@@ -31,12 +31,18 @@ void Main::DFS(int k) {
         path->addEdge(e);
         //a cestu v grafu vlozim na zasobnik
         stack->push(path);
+        //Vypis
+        cout<<"INIT PUSH"<<endl<<*stack;
     }
 
     //zacnu procházet cely prostor
     while (!stack->is_empty()) {
         //vemu si cestu neboli vraceni se o uroven zpet
         StackItem* path = stack->pop();
+        //Vypis
+        cout<<"POP: "<<(*path)<<" |"<<path->getMaxDegree()<<endl;
+        //Vypis
+        cout<<*stack;
         //pomocna cesta
         StackItem* aaa = 0;
 

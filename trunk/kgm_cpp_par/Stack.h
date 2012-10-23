@@ -17,6 +17,7 @@ struct StackNode {
 };
 
 class Stack {
+    friend ostream& operator<<(ostream& os, const Stack& e);
 private:
     StackNode* first_node;
     int size;

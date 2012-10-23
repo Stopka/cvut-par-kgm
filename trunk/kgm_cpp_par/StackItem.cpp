@@ -66,7 +66,7 @@ bool StackItem::isPathEmpty() {
 }
 
 ostream& operator<<(ostream& os, const StackItem& s) {
-    os << s.path;
+    os << *(s.path);
     return os;
 }
 
