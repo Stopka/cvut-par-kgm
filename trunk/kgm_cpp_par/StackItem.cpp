@@ -48,18 +48,83 @@ bool StackItem::isContainsEdge(Edge* e) {
     return path->isIn(e);
 }
 
-int StackItem::pathSize(){
+int StackItem::pathSize() {
     return path->getSize();
 }
 
-Edge* StackItem::getFristEdge(){
+Edge* StackItem::getFristEdge() {
     return path->getFirst();
 }
 
-Edge* StackItem::getLastEdge(){
+Edge* StackItem::getLastEdge() {
     return path->getLast();
 }
 
-bool StackItem::isPathEmpty(){
+bool StackItem::isPathEmpty() {
     return path->isEmpty();
+}
+
+ostream& operator<<(ostream& os, const StackItem& s) {
+    os << s->path;
+    return os;
+}
+
+void StackItem::removeEdge(Edge edge) {
+    path.remove(edge);
+}
+
+void StackItem::removeLastEdge() {
+    path.removeLast();
+}
+
+Edge* StackItem::getEdge(int index) {
+    return path.getItem(index);
+}
+
+void StackItem::countDegree() {
+    Edge* addedEdge = path.getLast();
+    //promena, ve ktere ukladam navstivenou souradnici uzlu, aby se mi neduplikovali vyskyty
+    //pri pocitani stupne vrcholu a mohl projit vsechny moznosti, kdyby se mi shodovala
+    //druha souradnice
+    int visitedVertexS = -1;
+    int visitedVertexE = -1;
+    for (int i = 0; i < path->getSize() - 1; i++) {
+        //pokud nejaka hrana navazuje, tak u daneho vrcholu zvysime stupen
+        if ((addedEdge.getStart() == path->getItem(i).getStart()) && visitedVertexS != addedEdge.getStart()) {
+            vertex[addedEdge.getStart()]++;
+            visitedVertexS = addedEdge.getStart();
+        }
+        if ((addedEdge.getStart() == path->getItem(i).getEnd()) && visitedVertexS != addedEdge.getStart()) {
+            vertex[addedEdge.getStart()]++;
+            visitedVertexS = addedEdge.getStart();
+        }
+        if (addedEdge.getEnd() == path->getItem(i).getStart() && visitedVertexE != addedEdge.getEnd()) {
+            vertex[addedEdge.getEnd()]++;
+            visitedVertexE = addedEdge.getEnd();
+        }
+        if (addedEdge.getEnd() == path->getItem(i).getEnd() && visitedVertexE != addedEdge.getEnd()) {
+            vertex[addedEdge.getEnd()]++;
+            visitedVertexE = addedEdge.getEnd();
+        }
+
+    }
+}
+
+int StackItem::getMaxDegree() {
+    //countDegree();
+    int max = 0;
+    for (int i = 0; i < Main.NUMBER_OF_VERTEX; i++) {
+        if (vertex[i] > max) {
+            max = vertex[i];
+        }
+    }
+    return max;
+}
+
+List* StackItem::getPath() {
+    return this->path;
+}
+
+int* StackItem::getVertexArray() {
+    return this->vertex;
 }
