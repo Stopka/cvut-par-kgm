@@ -15,6 +15,25 @@ List::List() {
 }
 
 List::List(const List& orig) {
+    first_node=NULL;
+    last_node=NULL;
+    size=0;
+    ListNode* node=orig.first_node;
+    ListNode* prev_node=NULL;
+    ListNode* new_node;
+    while(node!=NULL){
+        new_node=new ListNode();
+        if(first_node==NULL){
+            first_node=new_node;
+        }else{
+            prev_node->next=new_node;
+        }
+        new_node->content=node->content;
+        new_node->next=NULL;
+        last_node=new_node;
+        node=node->next;
+        prev_node=new_node;
+    }
 }
 
 List::~List() {
@@ -74,7 +93,7 @@ ostream& operator<<(ostream& os, const List& s) {
         if (inter) {
             os << "; ";
         }
-        os << node->content;
+        os << *(node->content);
         node = node->next;
         inter = true;
     }

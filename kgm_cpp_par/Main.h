@@ -18,7 +18,7 @@ public:
     //arraylist na uchovani hran
     List* edges;
     //pocet vrcholu grafu
-    static const int NUMBER_OF_VERTEX = 6;
+    static int NUMBER_OF_VERTEX;
     
     Main();
     Main(const Main& orig);
