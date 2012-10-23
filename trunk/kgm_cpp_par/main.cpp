@@ -15,7 +15,7 @@ using namespace std;
  * 
  */
 int main(int argc, char** argv) {
-    
+    /* 
     Main::NUMBER_OF_VERTEX=6;
     int dfsK=5;
     int** arr = new int*[Main::NUMBER_OF_VERTEX];
