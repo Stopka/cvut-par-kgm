@@ -39,7 +39,8 @@ OBJECTFILES= \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/List.o \
 	${OBJECTDIR}/Stack.o \
-	${OBJECTDIR}/Edge.o
+	${OBJECTDIR}/Edge.o \
+	${OBJECTDIR}/Main.o
 
 
 # C Compiler Flags
@@ -90,6 +91,11 @@ ${OBJECTDIR}/Edge.o: Edge.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/Edge.o Edge.cpp
+
+${OBJECTDIR}/Main.o: Main.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/Main.o Main.cpp
 
 # Subprojects
 .build-subprojects:

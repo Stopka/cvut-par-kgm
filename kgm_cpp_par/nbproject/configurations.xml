@@ -6,6 +6,7 @@
                    projectFiles="true">
       <itemPath>Edge.h</itemPath>
       <itemPath>List.h</itemPath>
+      <itemPath>Main.h</itemPath>
       <itemPath>Stack.h</itemPath>
       <itemPath>StackItem.h</itemPath>
     </logicalFolder>
@@ -14,6 +15,7 @@
                    projectFiles="true">
       <itemPath>Edge.cpp</itemPath>
       <itemPath>List.cpp</itemPath>
+      <itemPath>Main.cpp</itemPath>
       <itemPath>Stack.cpp</itemPath>
       <itemPath>StackItem.cpp</itemPath>
       <itemPath>main.cpp</itemPath>

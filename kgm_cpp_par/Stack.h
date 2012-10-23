@@ -8,6 +8,9 @@
 #ifndef STACK_H
 #define	STACK_H
 
+#include "StackItem.h"
+
+
 struct StackNode {
     StackItem* content;
     StackNode* next;
@@ -15,8 +18,8 @@ struct StackNode {
 
 class Stack {
 private:
-    StackNode* first_node=0;
-    int size=0;
+    StackNode* first_node;
+    int size;
 
 public:
     Stack();

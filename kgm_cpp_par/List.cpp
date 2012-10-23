@@ -9,6 +9,9 @@
 #include "StackItem.h"
 
 List::List() {
+    first_node=NULL;
+    last_node=NULL;
+    size=0;
 }
 
 List::List(const List& orig) {
@@ -35,8 +38,8 @@ int List::getSize() {
 }
 
 void List::clear() {
-    while (first_node != 0) {
-        remove(first_node);
+    while (first_node != NULL) {
+        remove(first_node->content);
     }
 }
 
@@ -64,7 +67,7 @@ bool List::isEmpty() {
 }
 
 ostream& operator<<(ostream& os, const List& s) {
-    ListNode* node = s->first_node;
+    ListNode* node = s.first_node;
     bool inter = false;
     os << "[";
     while (node != 0) {
@@ -102,7 +105,7 @@ void List::remove(Edge* edge) {
 }
 
 void List::removeLast() {
-    remove(last_node);
+    remove(last_node->content);
 }
 
 Edge* List::getItem(int index) {

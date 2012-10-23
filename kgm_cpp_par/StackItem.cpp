@@ -7,22 +7,23 @@
 
 #include "StackItem.h"
 #include "Stack.h"
+#include "Main.h"
 
 StackItem::StackItem(List* list) {
     path = list; //(list<Edge>) list.clone();
-    vertex = new int[Main.NUMBER_OF_VERTEX];
+    vertex = new int[Main::NUMBER_OF_VERTEX];
     //jelikoz z kazdeho vrcholu vychazi hrana, tak ma minimalne stupen 1
-    for (int i = 0; i < Main.NUMBER_OF_VERTEX; i++)
+    for (int i = 0; i < Main::NUMBER_OF_VERTEX; i++)
         vertex[i] = 0;
 }
 
 StackItem::StackItem(const StackItem& orig) {
-    this->path = new list(orig.path);
+    this->path = new List(*orig.path);
     vertex = orig.vertex;
     pathDeegre = orig.pathDeegre;
 }
 
-virtual StackItem::~StackItem() {
+StackItem::~StackItem() {
 
 }
 
@@ -36,11 +37,11 @@ void StackItem::addEdge(Edge* e) {
     //countDegree() neslo udelat, tak je to obesle tady
 
 
-    if (vertex[e.getStart()] == 0) {
-        vertex[e.getStart()]++;
+    if (vertex[e->getStart()] == 0) {
+        vertex[e->getStart()]++;
     }
-    if (vertex[e.getEnd()] == 0) {
-        vertex[e.getEnd()]++;
+    if (vertex[e->getEnd()] == 0) {
+        vertex[e->getEnd()]++;
     }
 }
 
@@ -65,24 +66,24 @@ bool StackItem::isPathEmpty() {
 }
 
 ostream& operator<<(ostream& os, const StackItem& s) {
-    os << s->path;
+    os << s.path;
     return os;
 }
 
-void StackItem::removeEdge(Edge edge) {
-    path.remove(edge);
+void StackItem::removeEdge(Edge* edge) {
+    path->remove(edge);
 }
 
 void StackItem::removeLastEdge() {
-    path.removeLast();
+    path->removeLast();
 }
 
 Edge* StackItem::getEdge(int index) {
-    return path.getItem(index);
+    return path->getItem(index);
 }
 
 void StackItem::countDegree() {
-    Edge* addedEdge = path.getLast();
+    Edge* addedEdge = path->getLast();
     //promena, ve ktere ukladam navstivenou souradnici uzlu, aby se mi neduplikovali vyskyty
     //pri pocitani stupne vrcholu a mohl projit vsechny moznosti, kdyby se mi shodovala
     //druha souradnice
@@ -90,21 +91,21 @@ void StackItem::countDegree() {
     int visitedVertexE = -1;
     for (int i = 0; i < path->getSize() - 1; i++) {
         //pokud nejaka hrana navazuje, tak u daneho vrcholu zvysime stupen
-        if ((addedEdge.getStart() == path->getItem(i).getStart()) && visitedVertexS != addedEdge.getStart()) {
-            vertex[addedEdge.getStart()]++;
-            visitedVertexS = addedEdge.getStart();
+        if ((addedEdge->getStart() == path->getItem(i)->getStart()) && visitedVertexS != addedEdge->getStart()) {
+            vertex[addedEdge->getStart()]++;
+            visitedVertexS = addedEdge->getStart();
         }
-        if ((addedEdge.getStart() == path->getItem(i).getEnd()) && visitedVertexS != addedEdge.getStart()) {
-            vertex[addedEdge.getStart()]++;
-            visitedVertexS = addedEdge.getStart();
+        if ((addedEdge->getStart() == path->getItem(i)->getEnd()) && visitedVertexS != addedEdge->getStart()) {
+            vertex[addedEdge->getStart()]++;
+            visitedVertexS = addedEdge->getStart();
         }
-        if (addedEdge.getEnd() == path->getItem(i).getStart() && visitedVertexE != addedEdge.getEnd()) {
-            vertex[addedEdge.getEnd()]++;
-            visitedVertexE = addedEdge.getEnd();
+        if (addedEdge->getEnd() == path->getItem(i)->getStart() && visitedVertexE != addedEdge->getEnd()) {
+            vertex[addedEdge->getEnd()]++;
+            visitedVertexE = addedEdge->getEnd();
         }
-        if (addedEdge.getEnd() == path->getItem(i).getEnd() && visitedVertexE != addedEdge.getEnd()) {
-            vertex[addedEdge.getEnd()]++;
-            visitedVertexE = addedEdge.getEnd();
+        if (addedEdge->getEnd() == path->getItem(i)->getEnd() && visitedVertexE != addedEdge->getEnd()) {
+            vertex[addedEdge->getEnd()]++;
+            visitedVertexE = addedEdge->getEnd();
         }
 
     }
@@ -113,7 +114,7 @@ void StackItem::countDegree() {
 int StackItem::getMaxDegree() {
     //countDegree();
     int max = 0;
-    for (int i = 0; i < Main.NUMBER_OF_VERTEX; i++) {
+    for (int i = 0; i < Main::NUMBER_OF_VERTEX; i++) {
         if (vertex[i] > max) {
             max = vertex[i];
         }

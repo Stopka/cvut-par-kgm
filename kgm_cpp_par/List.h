@@ -11,9 +11,14 @@
 #include "Edge.h"
 #include <iostream>
 using namespace std;
-struct ListNode{
-    ListNode* next=0;
-    Edge content=0;
+class ListNode{
+    public:
+        ListNode(){
+            next=NULL;
+            content=NULL;
+        }
+    ListNode* next;
+    Edge* content;
 };
 
 class List {
@@ -33,9 +38,9 @@ public:
     void removeLast();
     Edge* getItem(int index);
 private:
-    int size=0;
-    ListNode* first_node=0;
-    ListNode* last_node=0;
+    int size;
+    ListNode* first_node;
+    ListNode* last_node;
 };
 
 #endif	/* LIST_H */
