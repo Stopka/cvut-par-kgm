@@ -7,8 +7,11 @@
 
 #ifndef EDGE_H
 #define	EDGE_H
+#include <iostream>
+using namespace std;
 
 class Edge {
+    friend ostream& operator<<(ostream& os, const Edge& e);
 public:
     Edge(const Edge& orig);
     Edge(int start, int end, int id = 0);

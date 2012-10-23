@@ -9,13 +9,15 @@
 #define	LIST_H
 
 #include "Edge.h"
-
+#include <iostream>
+using namespace std;
 struct ListNode{
     ListNode* next=0;
     Edge content=0;
 };
 
 class List {
+    friend ostream& operator<<(ostream& os, const List& s);
 public:
     List();
     List(const List& orig);
@@ -27,6 +29,9 @@ public:
     Edge* getFirst();
     Edge* getLast();
     bool isEmpty();
+    void remove(Edge* edge);
+    void removeLast();
+    Edge* getItem(int index);
 private:
     int size=0;
     ListNode* first_node=0;
