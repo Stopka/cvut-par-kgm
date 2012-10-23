@@ -8,6 +8,8 @@
 #include "Stack.h"
 
 Stack::Stack(){
+    first_node=NULL;
+    size=0;
 }
 
 //destruktor

@@ -19,7 +19,7 @@ Edge::Edge(int start, int end, int id) {
     this->id = id;
 }
 
-virtual Edge::~Edge() {
+Edge::~Edge() {
 }
 
 int Edge::getEnd() const {
@@ -54,6 +54,6 @@ bool Edge::operator==(const Edge& e) const{
 }
 
 ostream& operator<<(ostream& os,const Edge& e){
-    os<<"("<<e->start<<","<<e->end<<")";
+    os<<"("<<e.start<<","<<e.end<<")";
     return os;
 }

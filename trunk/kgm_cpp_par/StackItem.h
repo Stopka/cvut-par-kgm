@@ -25,7 +25,7 @@ public:
     Edge* getLastEdge();
     Edge* getFristEdge();
     bool isPathEmpty();
-    string StackItem::toString();
+    string toString();
     void removeEdge(Edge* edge);
     void removeLastEdge();
     Edge* getEdge(int index);
@@ -37,7 +37,7 @@ public:
 private:
     List* path;
     int pathDeegre;
-    int vertex[];
+    int* vertex;
 };
 #endif	/* STACKITEM_H */
 
