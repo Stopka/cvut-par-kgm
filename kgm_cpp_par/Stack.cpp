@@ -25,6 +25,7 @@ void Stack::push(StackItem* item) {
     first_node = node;
 
     size++;
+    cout<<"PUSH: "<<(*item)<<" |"<<item->getMaxDegree()<<endl<<(*this);
 }
 
 StackItem* Stack::pop() {
@@ -34,6 +35,8 @@ StackItem* Stack::pop() {
 
     size--;
     delete node;
+    //Vypis
+    cout<<"POP: "<<(*item)<<" |"<<item->getMaxDegree()<<endl<<(*this);
     return item;
 }
 

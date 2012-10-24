@@ -16,7 +16,7 @@ using namespace std;
 class StackItem {
     friend ostream& operator<<(ostream& os, const StackItem& s);
 public:
-    StackItem(List* list);
+    StackItem(List* list,int NUMBER_OF_VERTEX);
     StackItem(const StackItem& orig);
     virtual ~StackItem();
     void addEdge(Edge* e);
@@ -38,6 +38,7 @@ private:
     List* path;
     int pathDeegre;
     int* vertex;
+    int NUMBER_OF_VERTEX;
 };
 #endif	/* STACKITEM_H */
 

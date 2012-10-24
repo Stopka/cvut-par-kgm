@@ -9,15 +9,17 @@
 #include "Stack.h"
 #include "Main.h"
 
-StackItem::StackItem(List* list) {
+StackItem::StackItem(List* list,int NUMBER_OF_VERTEX) {
+    this->NUMBER_OF_VERTEX=NUMBER_OF_VERTEX;
     path = list; //(list<Edge>) list.clone();
-    vertex = new int[Main::NUMBER_OF_VERTEX];
+    vertex = new int[NUMBER_OF_VERTEX];
     //jelikoz z kazdeho vrcholu vychazi hrana, tak ma minimalne stupen 1
-    for (int i = 0; i < Main::NUMBER_OF_VERTEX; i++)
+    for (int i = 0; i < NUMBER_OF_VERTEX; i++)
         vertex[i] = 0;
 }
 
 StackItem::StackItem(const StackItem& orig) {
+    this->NUMBER_OF_VERTEX=orig.NUMBER_OF_VERTEX;
     this->path = new List(*orig.path);
     vertex = orig.vertex;
     pathDeegre = orig.pathDeegre;
@@ -114,7 +116,7 @@ void StackItem::countDegree() {
 int StackItem::getMaxDegree() {
     //countDegree();
     int max = 0;
-    for (int i = 0; i < Main::NUMBER_OF_VERTEX; i++) {
+    for (int i = 0; i < NUMBER_OF_VERTEX; i++) {
         if (vertex[i] > max) {
             max = vertex[i];
         }

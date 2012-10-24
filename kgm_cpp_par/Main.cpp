@@ -8,7 +8,8 @@
 #include "Main.h"
 #include "StackItem.h"
 
-Main::Main() {
+Main::Main(int VERTEX_NUM) {
+    this->NUMBER_OF_VERTEX=VERTEX_NUM;
     stack=new Stack();
     edges=new List();
     minDegreeInited=false;
@@ -26,23 +27,20 @@ void Main::DFS(int k) {
     for (int i=0;i<edges->getSize();i++) {
         Edge* e=edges->getItem(i);
         //vytvorim zaznam (linked list)
-        StackItem* path = new StackItem(new List());
+        StackItem* path = new StackItem(new List(),NUMBER_OF_VERTEX);
         //vlozim hranu
         path->addEdge(e);
+        
+        //Vypis
+        cout<<"INIT ";
         //a cestu v grafu vlozim na zasobnik
         stack->push(path);
-        //Vypis
-        cout<<"INIT PUSH"<<endl<<*stack;
     }
 
     //zacnu procházet cely prostor
     while (!stack->is_empty()) {
         //vemu si cestu neboli vraceni se o uroven zpet
         StackItem* path = stack->pop();
-        //Vypis
-        cout<<"POP: "<<(*path)<<" |"<<path->getMaxDegree()<<endl;
-        //Vypis
-        cout<<*stack;
         //pomocna cesta
         StackItem* aaa = 0;
 
@@ -79,14 +77,15 @@ void Main::DFS(int k) {
                         minSpanningTree = aaa;
                         minDegreeInited = true;
                     }
-                    //kontrolni vypis
-                    //System.out.println("Kostra " + aaa.toString() + " stupen: " + aaa.getMaxDegree());
+                    //Vypis
+                    //cout<<"Kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
                     //dal nemusim prohledavat strom => orezavan
                     continue;
                     //ne break, jelikoz ten zahodi celou hladinu
                 } else {
                     //nemam kostru tak pokracuji
-
+                    //Vypis
+                    
                     //a celou cestu hodime na zasobnik
                     stack->push(aaa);
                 }
@@ -103,7 +102,7 @@ void Main::DFS(int k) {
     }
 
     cout << "Result" << endl << "--------------------" << endl;
-    cout << "Kostra: " << minSpanningTree << endl;
+    cout << "Kostra: " << (*minSpanningTree) << endl;
     cout << "Stupen: " << minSpanningTree->getMaxDegree();
 }
 
@@ -171,4 +170,8 @@ bool Main::isCycle(Edge* e, StackItem* path) {
 
     path->removeLastEdge();
     return false;
+}
+
+int Main::getNumOfVertex(){
+    return this->NUMBER_OF_VERTEX;
 }

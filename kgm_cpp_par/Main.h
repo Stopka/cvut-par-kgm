@@ -18,12 +18,13 @@ public:
     //arraylist na uchovani hran
     List* edges;
     //pocet vrcholu grafu
-    static int NUMBER_OF_VERTEX;
+    int NUMBER_OF_VERTEX;
     
-    Main();
+    Main(int NUMBER_OF_VERTEX);
     Main(const Main& orig);
     virtual ~Main();
     
+    int getNumOfVertex();
     static void main();
     void loadEdges(int** adjMatrix);
     void DFS(int k);
