@@ -15,29 +15,28 @@ using namespace std;
  * 
  */
 int main(int argc, char** argv) {
-    /* 
-    Main::NUMBER_OF_VERTEX=6;
+    /**/ 
+    int NUMBER_OF_VERTEX=6;
     int dfsK=5;
-    int** arr = new int*[Main::NUMBER_OF_VERTEX];
-    arr[0]=new int[Main::NUMBER_OF_VERTEX]{0, 1, 0, 0, 1, 0};
-    arr[1]=new int[Main::NUMBER_OF_VERTEX]{ 1, 0, 1, 0, 1, 0};
-    arr[2]=new int[Main::NUMBER_OF_VERTEX]{ 0, 1, 0, 1, 0, 0};
-    arr[3]=new int[Main::NUMBER_OF_VERTEX]{ 0, 0, 1, 0, 1, 1};
-    arr[4]=new int[Main::NUMBER_OF_VERTEX]{ 1, 1, 0, 1, 0, 0};
-    arr[5]=new int[Main::NUMBER_OF_VERTEX]{ 0, 0, 0, 1, 0, 0};
+    int** arr = new int*[NUMBER_OF_VERTEX];
+    arr[0]=new int[NUMBER_OF_VERTEX]{0, 1, 0, 0, 1, 0};
+    arr[1]=new int[NUMBER_OF_VERTEX]{ 1, 0, 1, 0, 1, 0};
+    arr[2]=new int[NUMBER_OF_VERTEX]{ 0, 1, 0, 1, 0, 0};
+    arr[3]=new int[NUMBER_OF_VERTEX]{ 0, 0, 1, 0, 1, 1};
+    arr[4]=new int[NUMBER_OF_VERTEX]{ 1, 1, 0, 1, 0, 0};
+    arr[5]=new int[NUMBER_OF_VERTEX]{ 0, 0, 0, 1, 0, 0};
     /*/
-    Main::NUMBER_OF_VERTEX=3;
-    int dfsK=2;
-    int** arr = new int*[Main::NUMBER_OF_VERTEX];
-    arr[0] = new int[Main::NUMBER_OF_VERTEX]{0, 1, 1};
-    arr[1] = new int[Main::NUMBER_OF_VERTEX]{1, 0, 1};
-    arr[2] = new int[Main::NUMBER_OF_VERTEX]{1, 1, 0};
+    int NUMBER_OF_VERTEX=3;
+    int** arr = new int*[NUMBER_OF_VERTEX];
+    arr[0] = new int[NUMBER_OF_VERTEX]{0, 1, 1};
+    arr[1] = new int[NUMBER_OF_VERTEX]{1, 0, 1};
+    arr[2] = new int[NUMBER_OF_VERTEX]{1, 1, 0};
     /**/
     /***
      * Pokud budes zkouset jine grafy, tak se musi upravit konstanta na pocet vrcholu!!!!
      * a samozrejme parametr k u metody DFS
      */
-    Main* app = new Main();
+    Main* app = new Main(NUMBER_OF_VERTEX);
     app->loadEdges(arr);
 
     app->DFS(dfsK);

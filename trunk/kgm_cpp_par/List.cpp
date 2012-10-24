@@ -33,6 +33,7 @@ List::List(const List& orig) {
         last_node=new_node;
         node=node->next;
         prev_node=new_node;
+        size++;
     }
 }
 
