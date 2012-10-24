@@ -21,7 +21,10 @@ StackItem::StackItem(List* list,int NUMBER_OF_VERTEX) {
 StackItem::StackItem(const StackItem& orig) {
     this->NUMBER_OF_VERTEX=orig.NUMBER_OF_VERTEX;
     this->path = new List(*orig.path);
-    vertex = orig.vertex;
+    vertex = new int[NUMBER_OF_VERTEX];
+    for(int i=0;i<NUMBER_OF_VERTEX;i++){
+        vertex[i]=orig.vertex[i];
+    }
     pathDeegre = orig.pathDeegre;
 }
 
