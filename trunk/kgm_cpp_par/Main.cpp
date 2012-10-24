@@ -32,7 +32,7 @@ void Main::DFS(int k) {
         path->addEdge(e);
         
         //Vypis
-        cout<<"INIT ";
+        //cout<<"INIT ";
         //a cestu v grafu vlozim na zasobnik
         stack->push(path);
     }
