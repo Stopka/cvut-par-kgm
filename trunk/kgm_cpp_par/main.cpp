@@ -6,26 +6,46 @@
  */
 
 #include <cstdlib>
-
+#include <fstream>
+#include <iostream>
 #include "Main.h"
 
 using namespace std;
+const char* file_name = "graph.txt";
 
 /*
  * 
  */
 int main(int argc, char** argv) {
-    /**/ 
-    int NUMBER_OF_VERTEX=6;
-    int dfsK=5;
+    int NUMBER_OF_VERTEX=0;
+    ifstream file;
+    string line;
+    file.open(file_name);
+    file>>NUMBER_OF_VERTEX;
+    //cout<<NUMBER_OF_VERTEX<<endl;
+    getline(file, line);
     int** arr = new int*[NUMBER_OF_VERTEX];
-    arr[0]=new int[NUMBER_OF_VERTEX]{0, 1, 0, 0, 1, 0};
-    arr[1]=new int[NUMBER_OF_VERTEX]{ 1, 0, 1, 0, 1, 0};
-    arr[2]=new int[NUMBER_OF_VERTEX]{ 0, 1, 0, 1, 0, 0};
-    arr[3]=new int[NUMBER_OF_VERTEX]{ 0, 0, 1, 0, 1, 1};
-    arr[4]=new int[NUMBER_OF_VERTEX]{ 1, 1, 0, 1, 0, 0};
-    arr[5]=new int[NUMBER_OF_VERTEX]{ 0, 0, 0, 1, 0, 0};
-    /*/
+    for(int row=0;row<NUMBER_OF_VERTEX;row++){
+        arr[row] = new int[NUMBER_OF_VERTEX];
+        getline(file, line);
+        for(int col=0;col<NUMBER_OF_VERTEX;col++){
+            arr[row][col]=line[col]-'0';
+            //cout<<arr[row][col];
+        }
+        //cout<<endl;
+    }
+    int dfsK=NUMBER_OF_VERTEX-1;
+    /*
+    int NUMBER_OF_VERTEX = 6;
+    int dfsK = 5;
+    int** arr = new int*[NUMBER_OF_VERTEX];
+    arr[0] = new int[NUMBER_OF_VERTEX]{0, 1, 0, 0, 1, 0};
+    arr[1] = new int[NUMBER_OF_VERTEX]{1, 0, 1, 0, 1, 0};
+    arr[2] = new int[NUMBER_OF_VERTEX]{0, 1, 0, 1, 0, 0};
+    arr[3] = new int[NUMBER_OF_VERTEX]{0, 0, 1, 0, 1, 1};
+    arr[4] = new int[NUMBER_OF_VERTEX]{1, 1, 0, 1, 0, 0};
+    arr[5] = new int[NUMBER_OF_VERTEX]{0, 0, 0, 1, 0, 0};
+    /*//*
     int NUMBER_OF_VERTEX=3;
     int** arr = new int*[NUMBER_OF_VERTEX];
     arr[0] = new int[NUMBER_OF_VERTEX]{0, 1, 1};
@@ -50,4 +70,3 @@ int main(int argc, char** argv) {
      */
     return 0;
 }
-
