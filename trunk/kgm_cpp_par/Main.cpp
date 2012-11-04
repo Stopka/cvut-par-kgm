@@ -65,20 +65,30 @@ void Main::DFS(int k) {
                 //zkoumam zda dana cesta nema vetsi stupen nez dosavadni nalezeny
                 if (minDegreeInited && aaa->getMaxDegree() > minDegree) {
                     //pokud ano, tak orezavam :)
+                    delete(aaa);
+                    aaa=NULL;
                     continue;
                 }
 
                 //pokud mam narok na kostru
                 if (aaa->pathSize() == k) {
-
-                    //zapamatuji si kostru
+                    
+                    //Vypis
+                    cout<<"Kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
+                    
+                    //pokud je menšího stupně zapamatuji si
                     if (!minDegreeInited || aaa->getMaxDegree() < minDegree) {
                         minDegree = aaa->getMaxDegree();
+                        if(minSpanningTree!=NULL){
+                                delete minSpanningTree;
+                                minSpanningTree=NULL;
+                        }
                         minSpanningTree = aaa;
                         minDegreeInited = true;
+                    }else{
+                        delete aaa;
+                        aaa=NULL;
                     }
-                    //Vypis
-                    //cout<<"Kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
                     //dal nemusim prohledavat strom => orezavan
                     continue;
                     //ne break, jelikoz ten zahodi celou hladinu
@@ -89,16 +99,18 @@ void Main::DFS(int k) {
                     //a celou cestu hodime na zasobnik
                     stack->push(aaa);
                 }
-            } else {
+            } /*else {
                 //tvori cyklus
                 //System.out.println("Vetev: " + path.toString() + " s hranou: " + e.toString() + " tvori cyklus -> cut");
                 //tato vetev, dal nevedete, ale porad mohou existovat jine moznosti v jinych vetvich
                 //ktere musime dat na zasobnik
-                continue;
+                //delete path;
+                //continue;
 
-            }
+            }*/
         }
-
+        delete path;
+        path=NULL;
     }
 
     cout << "Result" << endl << "--------------------" << endl;
