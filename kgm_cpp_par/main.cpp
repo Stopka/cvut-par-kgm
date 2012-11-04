@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     string line;
     file.open(file_name);
     file>>NUMBER_OF_VERTEX;
-    //cout<<NUMBER_OF_VERTEX<<endl;
+    cout<<NUMBER_OF_VERTEX<<endl;
     getline(file, line);
     int** arr = new int*[NUMBER_OF_VERTEX];
     for(int row=0;row<NUMBER_OF_VERTEX;row++){
@@ -30,9 +30,9 @@ int main(int argc, char** argv) {
         getline(file, line);
         for(int col=0;col<NUMBER_OF_VERTEX;col++){
             arr[row][col]=line[col]-'0';
-            //cout<<arr[row][col];
+            cout<<arr[row][col];
         }
-        //cout<<endl;
+        cout<<endl;
     }
     int dfsK=NUMBER_OF_VERTEX-1;
     /*

@@ -29,7 +29,8 @@ StackItem::StackItem(const StackItem& orig) {
 }
 
 StackItem::~StackItem() {
-
+    delete path;
+    delete[] vertex;
 }
 
 void StackItem::addEdge(Edge* e) {

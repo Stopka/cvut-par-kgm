@@ -47,8 +47,8 @@ OBJECTFILES= \
 CFLAGS=
 
 # CC Compiler Flags
-CCFLAGS=
-CXXFLAGS=
+CCFLAGS=-Wall -pedantic
+CXXFLAGS=-Wall -pedantic
 
 # Fortran Compiler Flags
 FFLAGS=
@@ -70,32 +70,32 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/kgm_cpp_par: ${OBJECTFILES}
 ${OBJECTDIR}/StackItem.o: StackItem.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/StackItem.o StackItem.cpp
+	$(COMPILE.cc) -g -s -MMD -MP -MF $@.d -o ${OBJECTDIR}/StackItem.o StackItem.cpp
 
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
+	$(COMPILE.cc) -g -s -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
 
 ${OBJECTDIR}/List.o: List.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/List.o List.cpp
+	$(COMPILE.cc) -g -s -MMD -MP -MF $@.d -o ${OBJECTDIR}/List.o List.cpp
 
 ${OBJECTDIR}/Stack.o: Stack.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/Stack.o Stack.cpp
+	$(COMPILE.cc) -g -s -MMD -MP -MF $@.d -o ${OBJECTDIR}/Stack.o Stack.cpp
 
 ${OBJECTDIR}/Edge.o: Edge.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/Edge.o Edge.cpp
+	$(COMPILE.cc) -g -s -MMD -MP -MF $@.d -o ${OBJECTDIR}/Edge.o Edge.cpp
 
 ${OBJECTDIR}/Main.o: Main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
-	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/Main.o Main.cpp
+	$(COMPILE.cc) -g -s -MMD -MP -MF $@.d -o ${OBJECTDIR}/Main.o Main.cpp
 
 # Subprojects
 .build-subprojects:

@@ -40,6 +40,10 @@
         <compilerSet>default</compilerSet>
       </toolsSet>
       <compileType>
+        <ccTool>
+          <stripSymbols>true</stripSymbols>
+          <commandLine>-Wall -pedantic</commandLine>
+        </ccTool>
       </compileType>
     </conf>
     <conf name="Release" type="1">
