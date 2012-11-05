@@ -74,7 +74,7 @@ void Main::DFS(int k) {
                 if (aaa->pathSize() == k) {
                     
                     //Vypis
-                    cout<<"Kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
+                    //cout<<"Kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
                     
                     //pokud je menšího stupně zapamatuji si
                     if (!minDegreeInited || aaa->getMaxDegree() < minDegree) {
@@ -83,6 +83,8 @@ void Main::DFS(int k) {
                                 delete minSpanningTree;
                                 minSpanningTree=NULL;
                         }
+                        //vypis
+                        cout<<"Nova min kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
                         minSpanningTree = aaa;
                         minDegreeInited = true;
                     }else{
