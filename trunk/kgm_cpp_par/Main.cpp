@@ -9,11 +9,11 @@
 #include "StackItem.h"
 
 Main::Main(int VERTEX_NUM) {
-    this->NUMBER_OF_VERTEX=VERTEX_NUM;
-    stack=new Stack();
-    edges=new List();
-    minDegreeInited=false;
-    minSpanningTree=NULL;
+    this->NUMBER_OF_VERTEX = VERTEX_NUM;
+    stack = new Stack();
+    edges = new List();
+    minDegreeInited = false;
+    minSpanningTree = NULL;
 }
 
 Main::Main(const Main& orig) {
@@ -24,13 +24,13 @@ Main::~Main() {
 
 void Main::DFS(int k) {
     //vlozim vsechny hrany na zásobník
-    for (int i=0;i<edges->getSize();i++) {
-        Edge* e=edges->getItem(i);
+    for (int i = 0; i < edges->getSize(); i++) {
+        Edge* e = edges->getItem(i);
         //vytvorim zaznam (linked list)
-        StackItem* path = new StackItem(new List(),NUMBER_OF_VERTEX);
+        StackItem* path = new StackItem(new List(), NUMBER_OF_VERTEX);
         //vlozim hranu
         path->addEdge(e);
-        
+
         //Vypis
         //cout<<"INIT ";
         //a cestu v grafu vlozim na zasobnik
@@ -45,8 +45,8 @@ void Main::DFS(int k) {
         StackItem* aaa = 0;
 
         //projdu vsechny mozne cesty v grafu
-        for (int it=0;it<edges->getSize(); it++) {
-            Edge* e=edges->getItem(it);
+        for (int it = 0; it < edges->getSize(); it++) {
+            Edge* e = edges->getItem(it);
             //pokud bude hrana v ceste, neboli uz jsme hranu navstivili, tak nas hrana nezajima
             if (isEdgeInPath(e, path)) {
                 continue;
@@ -66,30 +66,30 @@ void Main::DFS(int k) {
                 if (minDegreeInited && aaa->getMaxDegree() > minDegree) {
                     //pokud ano, tak orezavam :)
                     delete(aaa);
-                    aaa=NULL;
+                    aaa = NULL;
                     continue;
                 }
 
                 //pokud mam narok na kostru
                 if (aaa->pathSize() == k) {
-                    
+
                     //Vypis
                     //cout<<"Kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
-                    
+
                     //pokud je menšího stupně zapamatuji si
                     if (!minDegreeInited || aaa->getMaxDegree() < minDegree) {
                         minDegree = aaa->getMaxDegree();
-                        if(minSpanningTree!=NULL){
-                                delete minSpanningTree;
-                                minSpanningTree=NULL;
+                        if (minSpanningTree != NULL) {
+                            delete minSpanningTree;
+                            minSpanningTree = NULL;
                         }
                         //vypis
-                        cout<<"Nova min kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
+                        cout << "Nova min kostra: " << (*aaa) << " |" << aaa->getMaxDegree() << endl;
                         minSpanningTree = aaa;
                         minDegreeInited = true;
-                    }else{
+                    } else {
                         delete aaa;
-                        aaa=NULL;
+                        aaa = NULL;
                     }
                     //dal nemusim prohledavat strom => orezavan
                     continue;
@@ -97,7 +97,7 @@ void Main::DFS(int k) {
                 } else {
                     //nemam kostru tak pokracuji
                     //Vypis
-                    
+
                     //a celou cestu hodime na zasobnik
                     stack->push(aaa);
                 }
@@ -112,12 +112,12 @@ void Main::DFS(int k) {
             }*/
         }
         delete path;
-        path=NULL;
+        path = NULL;
     }
 
-    cout << "Result" << endl << "--------------------" << endl;
+    cout << "--------------------" << endl << "RESULT" << endl;
     cout << "Kostra: " << (*minSpanningTree) << endl;
-    cout << "Stupen: " << minSpanningTree->getMaxDegree();
+    cout << "Stupen: " << minSpanningTree->getMaxDegree() << endl;
 }
 
 void Main::loadEdges(int** adjMatrix) {
@@ -186,6 +186,6 @@ bool Main::isCycle(Edge* e, StackItem* path) {
     return false;
 }
 
-int Main::getNumOfVertex(){
+int Main::getNumOfVertex() {
     return this->NUMBER_OF_VERTEX;
 }
