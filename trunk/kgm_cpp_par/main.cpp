@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <mpi/mpi.h>
 #include "Main.h"
 
 using namespace std;
@@ -17,6 +18,17 @@ const char* file_name = "graph.txt";
  * 
  */
 int main(int argc, char** argv) {
+    /*
+    int myrank, nprocs;
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    printf("Hello from processor %d of %d\n", myrank, nprocs);
+
+    MPI_Finalize();
+    */
     int NUMBER_OF_VERTEX=0;
     ifstream file;
     string line;
