@@ -63,6 +63,9 @@ int main(int argc, char** argv) {
     int pesek;
     /*barva procesu*/
     int color;
+    /*Pomocna promena, aby se nezadalo o praci vicekrat*/
+    bool wasRequestedForWork = false;
+
 
 
     /* Inicializace MPI prostředí */
@@ -78,52 +81,52 @@ int main(int argc, char** argv) {
     cout << "MPI_Barrier START" << endl;
 
     ifstream file;
-        string line;
-        file.open(file_name);
-        file >> NUMBER_OF_VERTEX;
-        //cout << NUMBER_OF_VERTEX << endl;
+    string line;
+    file.open(file_name);
+    file >> NUMBER_OF_VERTEX;
+    //cout << NUMBER_OF_VERTEX << endl;
+    getline(file, line);
+    int** adjMatrix = new int*[NUMBER_OF_VERTEX];
+    for (int row = 0; row < NUMBER_OF_VERTEX; row++) {
+        adjMatrix[row] = new int[NUMBER_OF_VERTEX];
         getline(file, line);
-        int** adjMatrix = new int*[NUMBER_OF_VERTEX];
-        for (int row = 0; row < NUMBER_OF_VERTEX; row++) {
-            adjMatrix[row] = new int[NUMBER_OF_VERTEX];
-            getline(file, line);
-            for (int col = 0; col < NUMBER_OF_VERTEX; col++) {
-                adjMatrix[row][col] = line[col] - '0';
-                //          cout << arr[row][col];
-            }
-            //    cout << endl;
+        for (int col = 0; col < NUMBER_OF_VERTEX; col++) {
+            adjMatrix[row][col] = line[col] - '0';
+            //          cout << arr[row][col];
         }
-        int dfsK = NUMBER_OF_VERTEX - 1;
+        //    cout << endl;
+    }
+    int dfsK = NUMBER_OF_VERTEX - 1;
 
 
-        edges = new List();
-        int k = 0;
-        //projdu celou matici
-        for (int i = 0; i < NUMBER_OF_VERTEX; i++) {
-            for (int j = 0; j < NUMBER_OF_VERTEX; j++) {
-                //pokud narazim na hranu
-                if (adjMatrix[i][j] == 1) {
-                    //tak ji vytvorim
-                    edges->add(new Edge(i, j, k));
-                    //a vymazu druhy vyskyt, abych nemel duplicity
-                    adjMatrix[i][j] = 0;
-                    adjMatrix[j][i] = 0;
-                    k++;
+    edges = new List();
+    int k = 0;
+    //projdu celou matici
+    for (int i = 0; i < NUMBER_OF_VERTEX; i++) {
+        for (int j = 0; j < NUMBER_OF_VERTEX; j++) {
+            //pokud narazim na hranu
+            if (adjMatrix[i][j] == 1) {
+                //tak ji vytvorim
+                edges->add(new Edge(i, j, k));
+                //a vymazu druhy vyskyt, abych nemel duplicity
+                adjMatrix[i][j] = 0;
+                adjMatrix[j][i] = 0;
+                k++;
 
-                }
             }
         }
+    }
 
-    
-    
+
+
     /*nastavim casovac - pro pocitani celkoveho casu programu*/
     if (my_rank == 0) {
         time1 = MPI_Wtime();
     }
-    
+
     /*praci rozdeluje procesor 0 - master pro tuto chvili*/
     if (my_rank == 0) {
-        
+
         /*prvotni naplneni zasobniku*/
         for (int i = 0; i < edges->getSize(); i++) {
             Edge* e = edges->getItem(i);
@@ -150,9 +153,9 @@ int main(int argc, char** argv) {
     processToAskForWork = (my_rank + 1) % processorCount;
 
     MPI_Barrier(MPI_COMM_WORLD);
-    cout << "MPI_Barrier INIT WORK SENT" << endl;
+    cout << "MPI_Barrier END" << endl;
     /*KONEC INICIALIZACE*/
-
+    int blbost = 0;
     while (processStatus != STATUS_FINISHED) {
 
         //optimalizacni vec, mozna ale zbytecna - rozmyslet
@@ -171,9 +174,12 @@ int main(int argc, char** argv) {
             }
             //jelikoz jsem IDLE, tak bych mel pozadat o praci
             int target = processToAskForWork % processorCount;
-            if (target != my_rank) {
-                cout << "Zadost o praci: " << my_rank << " zada proces " << target << " o praci" << endl;
-                MPI_Send(0, 0, MPI_INT, target, MSG_WORK_REQUEST, MPI_COMM_WORLD);
+            if (!wasRequestedForWork) {
+                if (target != my_rank) {
+                    cout << "Zadost o praci: " << my_rank << " zada proces " << target << " o praci" << endl;
+                    MPI_Send(0, 0, MPI_INT, target, MSG_WORK_REQUEST, MPI_COMM_WORLD);
+                    wasRequestedForWork = true;
+                }
             }
             processToAskForWork++;
 
@@ -189,15 +195,17 @@ int main(int argc, char** argv) {
                         cout << "[MPI_Recv] " << "Sender: " << status.MPI_SOURCE << " Target " << my_rank << " Message: " << status.MPI_TAG << endl;
                         break;
                         /*Prisla prace*/
-                    case MSG_WORK_SENT:{
+                    case MSG_WORK_SENT:
+                    {
                         //TODO - prisla prace -> deserializovat data a praci si hodit na zasobnik 
                         MPI_Recv(data, maxDataLenght, MPI_INT, MPI_ANY_SOURCE, MSG_WORK_SENT, MPI_COMM_WORLD, &status);
                         StackItem* item = new StackItem(data, edges, NUMBER_OF_VERTEX);
                         stack->push(item);
                         processStatus = STATUS_WORKING;
-                        cout << "[MPI_WORK_RECEIVED] Process:" << my_rank << endl;
-                        cout << *item << endl << flush;
-                        break;}
+                        cout << "[MPI_WORK_RECEIVED] Process:" << my_rank << "dostal praci" << endl;
+                        cout << "Item:" << *item << endl << flush;
+                        break;
+                    }
                         /*Zamitava odpoved na zadost o práci*/
                     case MSG_WORK_NOWORK:
                         MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
@@ -234,7 +242,11 @@ int main(int argc, char** argv) {
                         break;
                 }
             }
-
+            blbost++;
+            if (blbost == 5) {
+                processStatus = STATUS_FINISHED;
+                break;
+            }
 
         }/*End of IDLE*/
         int counter = 0;
@@ -245,33 +257,39 @@ int main(int argc, char** argv) {
                 if (flag) {
                     //obdobne se musi obslouzit zpravy
                     switch (status.MPI_TAG) {
-                        //prisla o zadost o praci
+                            //prisla o zadost o praci
                         case MSG_WORK_REQUEST:
-                            MPI_Recv(0,0,MPI_INT,MPI_ANY_SOURCE, MSG_WORK_REQUEST, MPI_COMM_WORLD, &status);
+                            MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MSG_WORK_REQUEST, MPI_COMM_WORLD, &status);
                             //nebudeme posilat praci, kdyz sam mam malo
-                            cout << "Prisla zadost o praci" << endl;
-                            
-                            if (stack->getSize() > 2){
+                            cout << my_rank << ":Prisla zadost o praci od procesu cislo: " << status.MPI_SOURCE << endl;
+
+                            if (stack->getSize() > 2) {
                                 StackItem* item = stack->popLast();
                                 cout << *item << endl;
                                 data = item->serialize();
-                                MPI_Send(data, data[0]+1, MPI_INT, status.MPI_SOURCE, MSG_WORK_SENT , MPI_COMM_WORLD);
+                                cout << my_rank << ":Prace odeslana" << endl;
+                                MPI_Send(data, data[0] + 1, MPI_INT, status.MPI_SOURCE, MSG_WORK_SENT, MPI_COMM_WORLD);
                                 //TODO resit pesky a barvicky
-                            }else{
+                            } else {
+                                cout << my_rank << ":Sam mam malo prace" << endl;
                                 //sorry neni prace :P
-                                 MPI_Send(0, 0, MPI_INT, status.MPI_SOURCE, MSG_WORK_NOWORK, MPI_COMM_WORLD);
-                            } 
+                                MPI_Send(0, 0, MPI_INT, status.MPI_SOURCE, MSG_WORK_NOWORK, MPI_COMM_WORLD);
+                            }
                             break;
                     }
 
                 }
                 //a dale jiz pokracuje samotny vypocet....
                 counter++;
-                if (counter == 10) return 0;
+                if (counter == 5) {
+                    processStatus = STATUS_FINISHED;
+                    break;
+                };
             }
         }
-    }
 
+    }
+    MPI_Finalize();
     //Main* app = new Main(NUMBER_OF_VERTEX);
     //app->loadEdges(arr);
 
