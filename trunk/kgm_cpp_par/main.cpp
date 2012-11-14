@@ -40,7 +40,7 @@ int NUMBER_OF_VERTEX = 0;
 /*
  * 
  */
-int main(int argc, char** argv) {    
+int main(int argc, char** argv) {
     /*Inicializace MPI promennych*/
     /*Cislo procesu - 0 je master*/
     int my_rank;
@@ -55,12 +55,15 @@ int main(int argc, char** argv) {
     int flag;
     /*Proces, ktery je pozadan o praci*/
     int processToAskForWork;
+    /*velikost posilanych dat TODO*/
+    int maxDataLenght = 200;
     /*Posílaná data*/
-    int message[300];
+    int* data = new int[maxDataLenght];
     /*pešek*/
     int pesek;
     /*barva procesu*/
     int color;
+
 
     /* Inicializace MPI prostředí */
     MPI_Init(&argc, &argv);
@@ -74,16 +77,7 @@ int main(int argc, char** argv) {
     MPI_Barrier(MPI_COMM_WORLD);
     cout << "MPI_Barrier START" << endl;
 
-    /*nastavim casovac - pro pocitani celkoveho casu programu*/
-    if (my_rank == 0) {
-        time1 = MPI_Wtime();
-    }
-    /*Hodit vsechna hrany na zasobnik a vsechny nebo co nejvice to pujdu rozeslu procesorum. Pro ty, pro ktere nic nemam
-     jim poslu NOWORK znacku*/
-
-    /*praci rozdeluje procesor 0 - master pro tuto chvili*/
-    if (my_rank == 0) {
-        ifstream file;
+    ifstream file;
         string line;
         file.open(file_name);
         file >> NUMBER_OF_VERTEX;
@@ -120,6 +114,16 @@ int main(int argc, char** argv) {
             }
         }
 
+    
+    
+    /*nastavim casovac - pro pocitani celkoveho casu programu*/
+    if (my_rank == 0) {
+        time1 = MPI_Wtime();
+    }
+    
+    /*praci rozdeluje procesor 0 - master pro tuto chvili*/
+    if (my_rank == 0) {
+        
         /*prvotni naplneni zasobniku*/
         for (int i = 0; i < edges->getSize(); i++) {
             Edge* e = edges->getItem(i);
@@ -134,17 +138,12 @@ int main(int argc, char** argv) {
             stack->push(path);
         }
         processStatus = STATUS_WORKING;
-       
+
     } else {
         //na zacatku nemam praci
         processStatus = STATUS_IDLE;
     }
-     
-    
-    
-    MPI_Finalize();
-    return 0;
-    
+
     /*obarvime proces na bilou*/
     color = WHITE_PROCESS;
     /*Nastaveni koho se ptat na praci - aby nedoslo zbytecne k hromadnemu ptani se procesu 0*/
@@ -190,11 +189,15 @@ int main(int argc, char** argv) {
                         cout << "[MPI_Recv] " << "Sender: " << status.MPI_SOURCE << " Target " << my_rank << " Message: " << status.MPI_TAG << endl;
                         break;
                         /*Prisla prace*/
-                    case MSG_WORK_SENT:
+                    case MSG_WORK_SENT:{
                         //TODO - prisla prace -> deserializovat data a praci si hodit na zasobnik 
+                        MPI_Recv(data, maxDataLenght, MPI_INT, MPI_ANY_SOURCE, MSG_WORK_SENT, MPI_COMM_WORLD, &status);
+                        StackItem* item = new StackItem(data, edges, NUMBER_OF_VERTEX);
+                        stack->push(item);
                         processStatus = STATUS_WORKING;
                         cout << "[MPI_WORK_RECEIVED] Process:" << my_rank << endl;
-                        break;
+                        cout << *item << endl << flush;
+                        break;}
                         /*Zamitava odpoved na zadost o práci*/
                     case MSG_WORK_NOWORK:
                         MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
@@ -234,7 +237,7 @@ int main(int argc, char** argv) {
 
 
         }/*End of IDLE*/
-
+        int counter = 0;
         //chovani procesu pri praci
         if (processStatus == STATUS_WORKING) {
             while (!stack->is_empty() && processStatus != STATUS_FINISHED) {
@@ -242,11 +245,29 @@ int main(int argc, char** argv) {
                 if (flag) {
                     //obdobne se musi obslouzit zpravy
                     switch (status.MPI_TAG) {
-
+                        //prisla o zadost o praci
+                        case MSG_WORK_REQUEST:
+                            MPI_Recv(0,0,MPI_INT,MPI_ANY_SOURCE, MSG_WORK_REQUEST, MPI_COMM_WORLD, &status);
+                            //nebudeme posilat praci, kdyz sam mam malo
+                            cout << "Prisla zadost o praci" << endl;
+                            
+                            if (stack->getSize() > 2){
+                                StackItem* item = stack->popLast();
+                                cout << *item << endl;
+                                data = item->serialize();
+                                MPI_Send(data, data[0]+1, MPI_INT, status.MPI_SOURCE, MSG_WORK_SENT , MPI_COMM_WORLD);
+                                //TODO resit pesky a barvicky
+                            }else{
+                                //sorry neni prace :P
+                                 MPI_Send(0, 0, MPI_INT, status.MPI_SOURCE, MSG_WORK_NOWORK, MPI_COMM_WORLD);
+                            } 
+                            break;
                     }
 
                 }
                 //a dale jiz pokracuje samotny vypocet....
+                counter++;
+                if (counter == 10) return 0;
             }
         }
     }

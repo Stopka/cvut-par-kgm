@@ -27,9 +27,11 @@ public:
     ~Stack();
     void push(StackItem* item);
     StackItem* pop();
+    StackItem* popLast();
     bool is_empty() const;
     void clear();
     int count() const;
+    int getSize();
 };
 
 #endif	/* STACK_H */
