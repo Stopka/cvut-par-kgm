@@ -54,10 +54,27 @@ bool Edge::operator==(const Edge& e) const{
 }
 
 ostream& operator<<(ostream& os,const Edge& e){
+    os<<"(";
+    //os<<e.id<<"|";
     if(e.start<e.end){
-        os<<"("<<e.start<<","<<e.end<<")";
+        os<<e.start<<","<<e.end;
     }else{
-        os<<"("<<e.end<<","<<e.start<<")";
+        os<<e.end<<","<<e.start;
     }
+    os<<")";
     return os;
+}
+
+bool Edge::operator>(const Edge& e) const{
+    if(this->id<e.id){
+        return true;
+    }
+    return false;
+}
+
+bool Edge::operator<(const Edge& e) const{
+    if(this->id>e.id){
+        return true;
+    }
+    return false;
 }

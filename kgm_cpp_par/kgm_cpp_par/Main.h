@@ -35,7 +35,7 @@ private:
     //hledana kostra s minimálním stupnem
     StackItem* minSpanningTree;
     bool isCycle(Edge* e, StackItem* path);
-    bool isEdgeInPath(Edge* e, StackItem* path);
+    bool isEdgePossible(Edge* e, StackItem* path);
 };
 
 #endif	/* MAIN_H */

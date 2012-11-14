@@ -141,3 +141,14 @@ Edge* List::getItem(int index) {
     }
     return node->content;
 }
+
+Edge* List::findById(int id){
+    ListNode* node=first_node;
+    while(node!=NULL){
+        if(node->content->getId()==id){
+            return node->content;
+        }
+        node=node->next;
+    }
+    return NULL;
+}

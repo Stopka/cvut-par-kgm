@@ -47,8 +47,8 @@ void Main::DFS(int k) {
         //projdu vsechny mozne cesty v grafu
         for (int it = 0; it < edges->getSize(); it++) {
             Edge* e = edges->getItem(it);
-            //pokud bude hrana v ceste, neboli uz jsme hranu navstivili, tak nas hrana nezajima
-            if (isEdgeInPath(e, path)) {
+            //pokud bude hrana v ceste, neboli uz jsme hranu navstivili, nebo je hrana ve špatném pořadí (ochrana proti zbytečnému generování stejných koster) tak nas hrana nezajima
+            if (!isEdgePossible(e, path)) {
                 continue;
             }
             //pokud pridana hrana nevytvori cyklus
@@ -57,6 +57,7 @@ void Main::DFS(int k) {
                 // vytvorim novou cestou, kterou pozdeji ulozim na zasobnik
                 //predam ji v konstruktoru dosavadni cestu
                 aaa = new StackItem(*path);
+                StackItem* bbb=new StackItem(aaa->serialize(),edges,NUMBER_OF_VERTEX);
                 //pridam zkoumanou hranu do cesty
                 aaa->addEdge(e);
                 //spocitam jeji stupen s novou hranou
@@ -74,7 +75,7 @@ void Main::DFS(int k) {
                 if (aaa->pathSize() == k) {
 
                     //Vypis
-                    //cout<<"Kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
+                    //cout << "Kostra: " << (*aaa) << " |" << aaa->getMaxDegree() << endl;
 
                     //pokud je menšího stupně zapamatuji si
                     if (!minDegreeInited || aaa->getMaxDegree() < minDegree) {
@@ -87,6 +88,9 @@ void Main::DFS(int k) {
                         cout << "Nova min kostra: " << (*aaa) << " |" << aaa->getMaxDegree() << endl;
                         minSpanningTree = aaa;
                         minDegreeInited = true;
+                        if (minSpanningTree->getMaxDegree() == 2) {//Má-li stupeň 2, ukončíme hledání, dosáhli jsme dolní meze
+                            break;
+                        }
                     } else {
                         delete aaa;
                         aaa = NULL;
@@ -110,6 +114,10 @@ void Main::DFS(int k) {
                 //continue;
 
             }*/
+        }
+        if (minSpanningTree!=NULL && minSpanningTree->getMaxDegree() == 2) {//Má-li stupeň 2, ukončíme hledání, dosáhli jsme dolní meze
+            cout<< "Nalezena spodní mez" << endl;
+            break;
         }
         delete path;
         path = NULL;
@@ -139,8 +147,8 @@ void Main::loadEdges(int** adjMatrix) {
     }
 }
 
-bool Main::isEdgeInPath(Edge* e, StackItem* path) {
-    return path->isContainsEdge(e);
+bool Main::isEdgePossible(Edge* e, StackItem* path) {
+    return *path<*e;
 }
 
 bool Main::isCycle(Edge* e, StackItem* path) {

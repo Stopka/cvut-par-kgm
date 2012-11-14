@@ -31,6 +31,7 @@ public:
     bool isIn(Edge* item);
     int getSize();
     void clear();
+    Edge* findById(int id);
     Edge* getFirst();
     Edge* getLast();
     bool isEmpty();

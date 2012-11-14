@@ -135,3 +135,30 @@ List* StackItem::getPath() {
 int* StackItem::getVertexArray() {
     return this->vertex;
 }
+
+bool StackItem::operator<(const Edge& e){
+    if(*(getLastEdge())<e){
+        return true;
+    }
+    return false;
+}
+
+
+int* StackItem::serialize(){
+    int* serMatrix = new int[path->getSize()+1];
+    serMatrix[0]=path->getSize();
+    for(int i=0; i < path->getSize(); i++){
+        serMatrix[i+1] = path->getItem(i)->getId();
+    }
+    return serMatrix;
+}
+
+StackItem::StackItem(int* id_array, List* edges, int NUMBER_OF_VERTEX){
+    this->NUMBER_OF_VERTEX=NUMBER_OF_VERTEX;
+    this->path=new List();
+    this->vertex=new int[NUMBER_OF_VERTEX];
+    for(int i=1;i<(id_array[0]+1);i++){
+        this->addEdge(edges->findById(id_array[i]));
+        this->countDegree();
+    }
+}

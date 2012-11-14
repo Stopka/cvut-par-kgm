@@ -17,6 +17,7 @@ class StackItem {
     friend ostream& operator<<(ostream& os, const StackItem& s);
 public:
     StackItem(List* list,int NUMBER_OF_VERTEX);
+    StackItem(int* id_array,List* edges,int NUMBER_OF_VERTEX);
     StackItem(const StackItem& orig);
     virtual ~StackItem();
     void addEdge(Edge* e);
@@ -34,6 +35,8 @@ public:
     int getMaxDegree();
     List* getPath();
     int* getVertexArray();
+    bool operator<(const Edge& e);
+    int* serialize();
 private:
     List* path;
     int pathDeegre;

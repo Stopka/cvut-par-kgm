@@ -29,6 +29,19 @@ void Stack::push(StackItem* item) {
     //cout<<"PUSH: "<<(*item)<<" |"<<item->getMaxDegree()<<endl<<(*this);
 }
 
+StackItem* Stack::popLast(){
+    StackNode* node=first_node;
+    StackNode* previous;
+    while(node->next!=NULL){
+        previous=node;
+        node=node->next;
+    }
+    StackItem* result=node->content;
+    previous->next=NULL;
+    delete(node);
+    return result;
+}
+
 StackItem* Stack::pop() {
     StackNode* node=first_node;
     first_node=node->next;
