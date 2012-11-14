@@ -38,8 +38,6 @@ Stack* stack = new Stack();
 List* edges;
 int NUMBER_OF_VERTEX = 0;
 
-
-
 bool isEdgeInPath(Edge* e, StackItem* path) {
     return path->isContainsEdge(e);
 }
@@ -87,7 +85,6 @@ bool isCycle(Edge* e, StackItem* path) {
     return false;
 }
 
-
 /*
  * 
  */
@@ -121,7 +118,9 @@ int main(int argc, char** argv) {
     /*Posílaná data*/
     int* data = new int[maxDataLenght];
     /*pešek*/
-    int pesek;
+    int pesek = 0;
+    /*pomocna promena, ktera si pamatuje, zda byl odeslan pesek*/
+    bool wasPesekSent = false;
     /*barva procesu*/
     int color;
     /*Pomocna promena, aby se nezadalo o praci vicekrat*/
@@ -224,20 +223,23 @@ int main(int argc, char** argv) {
         if ((my_rank == 0) && (processorCount == 1) && (processStatus == STATUS_IDLE)) {
             processStatus = STATUS_FINISHED;
         }
-       
+
         //chovani procesu pri vyckani
         if (processStatus == STATUS_IDLE) {
             //ADUV bod 1
-            if (my_rank == 0) {
+            if ((my_rank == 0) && (!wasPesekSent)) {
                 color = WHITE_PROCESS;
                 pesek = WHITE_PROCESS;
                 MPI_Send(&pesek, 1, MPI_INT, 1, MSG_TOKEN, MPI_COMM_WORLD);
-            //zde si moc jisty nejsem - ADUV bod 3
-            }/*else{
-                int next_rank = (my_rank+1) % processorCount;
+                wasPesekSent = true;
+                //ADUV bod 3
+            } else if ((pesek != 0) && (my_rank != 0)) {
+                int next_rank = (my_rank + 1) % processorCount;
                 MPI_Send(&pesek, 1, MPI_INT, next_rank, MSG_TOKEN, MPI_COMM_WORLD);
-            }*/
-            
+                color = WHITE_PROCESS;
+                pesek = 0;
+            }
+
             //jelikoz jsem IDLE, tak bych mel pozadat o praci
             int target = processToAskForWork % processorCount;
             if (!wasRequestedForWork) {
@@ -289,7 +291,12 @@ int main(int argc, char** argv) {
                          */
                         cout << "[MPI_Recv] " << "Sender: " << status.MPI_SOURCE << " Target " << my_rank << " Message: " << status.MPI_TAG << endl;
                         MPI_Recv(&pesek, 1, MPI_INT, status.MPI_SOURCE, MSG_TOKEN, MPI_COMM_WORLD, &status);
-                       
+
+                        if ((my_rank == 0) && (pesek == BLACK_PROCESS)) {
+                            cout << "MASTER PRIJAL BLACK TOKEN" << endl;
+                            wasPesekSent = false;
+                        }
+
                         if ((my_rank == 0) && (pesek == WHITE_PROCESS)) {
                             processStatus = STATUS_FINISHED;
                             cout << "MAIN PROCESS STATUS_FINISHED" << endl;
@@ -341,7 +348,7 @@ int main(int argc, char** argv) {
                                 data = item->serialize();
                                 cout << my_rank << ":Prace odeslana" << endl;
                                 MPI_Send(data, data[0] + 1, MPI_INT, status.MPI_SOURCE, MSG_WORK_SENT, MPI_COMM_WORLD);
-                                
+
                                 //ADUV Jestliže procesor Pi pošle práci procesoru Pj, kde i>j, pak Pi nastaví svou barvu na B. 
                                 if (my_rank > status.MPI_SOURCE) {
                                     color = BLACK_PROCESS;
@@ -367,6 +374,13 @@ int main(int argc, char** argv) {
                             }
                             break;
                         case MSG_FINISH:
+                            break;
+                        case MSG_TOKEN:
+                            MPI_Recv(&pesek, 1, MPI_INT, MPI_ANY_SOURCE, MSG_TOKEN, MPI_COMM_WORLD, &status);
+                            if (my_rank == 0) {
+                                wasPesekSent = false;
+                            }
+
                             break;
                     }
 
@@ -447,7 +461,7 @@ int main(int argc, char** argv) {
 
                 //a dale jiz pokracuje samotny vypocet....
                 cout << my_rank << ":Procesor cislo " << my_rank << " pracuje :)" << endl;
-                cout << my_rank << "Zbyva prvku na zasobniku: " << stack->getSize() << endl; 
+                cout << my_rank << "Zbyva prvku na zasobniku: " << stack->getSize() << endl;
                 stack->pop();
                 /*counter++;
                 if (counter == 5) {
@@ -457,18 +471,18 @@ int main(int argc, char** argv) {
             }//end of while
             //TODO rozmyslet !!!
             /*Pokud predchazejici cyklus skonci, tak to znamena, ze je prazdny zasobnik*/
-            if (stack->is_empty()){
-            processStatus = STATUS_IDLE;
-            cout << my_rank << ":zasobnik is empty" << endl;
-            } 
+            if (stack->is_empty()) {
+                processStatus = STATUS_IDLE;
+                cout << my_rank << ":zasobnik is empty" << endl;
+            }
         }//end of main while
 
     }
-    
-    
+
+
     //MPI_Barrier(MPI_COMM_WORLD);
     //cout << "MPI_Barrier END" << endl;
-
+    cout << "Procesor cislo " << my_rank << "se dostal az sem" << endl;
     if (my_rank == 0) {
         time2 = MPI_Wtime();
 
