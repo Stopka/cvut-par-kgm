@@ -10,6 +10,7 @@
 #include <iostream>
 #include <mpi/mpi.h>
 #include "Stack.h"
+#include "StackItem.h"
 #include "List.h"
 //#include "Main.h"
 
@@ -37,10 +38,70 @@ Stack* stack = new Stack();
 List* edges;
 int NUMBER_OF_VERTEX = 0;
 
+
+
+bool isEdgeInPath(Edge* e, StackItem* path) {
+    return path->isContainsEdge(e);
+}
+
+bool isCycle(Edge* e, StackItem* path) {
+
+    int komponent[NUMBER_OF_VERTEX];
+    //pocatecni jednoprvkove komponenty souvislosti
+    for (int i = 0; i < NUMBER_OF_VERTEX; i++) {
+        komponent[i] = i;
+    }
+
+    //hranu pridame na konec seznamu do cesty
+    path->addEdge(e);
+    //pomocna promenna do cyklus
+    int l = 0;
+
+    //while (!copyPath.isPathEmpty()) {
+    while (path->pathSize() != l) {
+        //vezmu si hranu
+        Edge* edge = path->getEdge(l);
+        int k1 = komponent[edge->getStart()];
+        int k2 = komponent[edge->getEnd()];
+        //pokud hrana patri do komponent souvislosti, tak mam cyklus
+        if (k1 == k2) {
+            //odstranim testovanou hranu
+            path->removeLastEdge();
+            return true;
+        } else {
+            //jinak musim poupravit komponentu souvislosti
+            //respektive snizit jeji pocet 1
+            for (int k = 0; k < NUMBER_OF_VERTEX; k++) {
+                if (komponent[k] == k2) {
+                    komponent[k] = k1;
+                }
+
+            }
+        }
+        l++;
+
+    }
+    //zkoumanou hranu odstanim - v ceste byla docasne, kvuli kontrole
+
+    path->removeLastEdge();
+    return false;
+}
+
+
 /*
  * 
  */
 int main(int argc, char** argv) {
+    /*Promenne*/
+    /*Zda byla poprve nalezen nejaky stupen kostry*/
+    bool minDegreeInited = false;
+    /*Prozatimni kostra s nejmensim stupnem*/
+    StackItem* minSpanningTree = NULL;
+    /*Nejmensi nalezeny stupen kostry*/
+    int minDegree;
+    /*Spodni mez stupne kostry - 2*/
+    int lowestPossibleDegree = 2;
+
     /*Inicializace MPI promennych*/
     /*Cislo procesu - 0 je master*/
     int my_rank;
@@ -155,24 +216,28 @@ int main(int argc, char** argv) {
     MPI_Barrier(MPI_COMM_WORLD);
     cout << "MPI_Barrier END" << endl;
     /*KONEC INICIALIZACE*/
-    
-        int counter = 0;
+
+    int counter = 0;
     while (processStatus != STATUS_FINISHED) {
 
         //optimalizacni vec, mozna ale zbytecna - rozmyslet
         if ((my_rank == 0) && (processorCount == 1) && (processStatus == STATUS_IDLE)) {
             processStatus = STATUS_FINISHED;
         }
-        //TODO - dodelat pesky, neboli algoritmus pro distribuovane ukonceni vypoctu :P
-
+       
         //chovani procesu pri vyckani
         if (processStatus == STATUS_IDLE) {
-            //jsme IDLE a procesor 0 -> musime barvit a rozesla peska
+            //ADUV bod 1
             if (my_rank == 0) {
                 color = WHITE_PROCESS;
                 pesek = WHITE_PROCESS;
                 MPI_Send(&pesek, 1, MPI_INT, 1, MSG_TOKEN, MPI_COMM_WORLD);
-            }
+            //zde si moc jisty nejsem - ADUV bod 3
+            }/*else{
+                int next_rank = (my_rank+1) % processorCount;
+                MPI_Send(&pesek, 1, MPI_INT, next_rank, MSG_TOKEN, MPI_COMM_WORLD);
+            }*/
+            
             //jelikoz jsem IDLE, tak bych mel pozadat o praci
             int target = processToAskForWork % processorCount;
             if (!wasRequestedForWork) {
@@ -198,9 +263,11 @@ int main(int argc, char** argv) {
                         /*Prisla prace*/
                     case MSG_WORK_SENT:
                     {
-                        //TODO - prisla prace -> deserializovat data a praci si hodit na zasobnik 
+                        //prijmu data
                         MPI_Recv(data, maxDataLenght, MPI_INT, MPI_ANY_SOURCE, MSG_WORK_SENT, MPI_COMM_WORLD, &status);
+                        //deseralizuji a vytvorim prvek na zasbonik
                         StackItem* item = new StackItem(data, edges, NUMBER_OF_VERTEX);
+                        //vlozim na zasobnik a proces muze zacit pracovat
                         stack->push(item);
                         processStatus = STATUS_WORKING;
                         cout << "[MPI_WORK_RECEIVED] Process:" << my_rank << "dostal praci" << endl;
@@ -217,11 +284,12 @@ int main(int argc, char** argv) {
                         break;
                         /*Prisel pesek zajistujici ukonceni vypoctu ADUV*/
                     case MSG_TOKEN:
+                        /*Jestliže Pi obdrží peška, pak má-li Pi barvu B, nastaví barvu peška na B. 
+                         * Jakmile se Pi stane idle, pošle peška po kružnici procesoru Pi+1 a nastaví svoji barvu na W. 
+                         */
                         cout << "[MPI_Recv] " << "Sender: " << status.MPI_SOURCE << " Target " << my_rank << " Message: " << status.MPI_TAG << endl;
                         MPI_Recv(&pesek, 1, MPI_INT, status.MPI_SOURCE, MSG_TOKEN, MPI_COMM_WORLD, &status);
-                        if ((my_rank == 0) && (pesek == BLACK_PROCESS)) {
-                            cout << "MASTER PRIJAL BLACK TOKEN" << endl;
-                        }
+                       
                         if ((my_rank == 0) && (pesek == WHITE_PROCESS)) {
                             processStatus = STATUS_FINISHED;
                             cout << "MAIN PROCESS STATUS_FINISHED" << endl;
@@ -235,7 +303,13 @@ int main(int argc, char** argv) {
                     case MSG_NEW_MINIMUM:
                         int message;
                         MPI_Recv(&message, 1, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
-                        //TODO dale oblouszit
+                        //prijmul jsem spodni mez - nic nemuze byt lepsi -> end
+                        if (message == lowestPossibleDegree) {
+                            processStatus = STATUS_FINISHED;
+                        } else if (message < minDegree) {
+                            minDegree = message;
+                        }
+                        break;
                     case MSG_FINISH:
                         MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MSG_FINISH, MPI_COMM_WORLD, &status);
                         processStatus = STATUS_FINISHED;
@@ -245,12 +319,12 @@ int main(int argc, char** argv) {
                         break;
                 }
             }
-         
+
 
         }/*End of IDLE*/
         //chovani procesu pri praci
         if (processStatus == STATUS_WORKING) {
-            while (!stack->is_empty() && processStatus != STATUS_FINISHED) {
+            while (!stack->is_empty()) {
                 MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
                 if (flag) {
                     //obdobne se musi obslouzit zpravy
@@ -260,14 +334,22 @@ int main(int argc, char** argv) {
                             MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MSG_WORK_REQUEST, MPI_COMM_WORLD, &status);
                             //nebudeme posilat praci, kdyz sam mam malo
                             cout << my_rank << ":Prisla zadost o praci od procesu cislo: " << status.MPI_SOURCE << endl;
-
+                            //TODO tohle taky rozmyslet, zda by to optimalizacne slo udelat lepe
                             if (stack->getSize() > 2) {
                                 StackItem* item = stack->popLast();
                                 cout << *item << endl;
                                 data = item->serialize();
                                 cout << my_rank << ":Prace odeslana" << endl;
                                 MPI_Send(data, data[0] + 1, MPI_INT, status.MPI_SOURCE, MSG_WORK_SENT, MPI_COMM_WORLD);
-                                //TODO resit pesky a barvicky
+                                
+                                //ADUV Jestliže procesor Pi pošle práci procesoru Pj, kde i>j, pak Pi nastaví svou barvu na B. 
+                                if (my_rank > status.MPI_SOURCE) {
+                                    color = BLACK_PROCESS;
+                                    if (pesek != 0) {
+                                        pesek = BLACK_PROCESS;
+                                    }
+                                }
+
                             } else {
                                 cout << my_rank << ":Sam mam malo prace" << endl;
                                 //sorry neni prace :P
@@ -275,34 +357,129 @@ int main(int argc, char** argv) {
                             }
                             break;
                         case MSG_NEW_MINIMUM:
-                            //TODO obslouzit, kdyz dostanu nove minimum
+                            int message;
+                            MPI_Recv(&message, 1, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
+                            //prijmul jsem spodni mez - nic nemuze byt lepsi -> end
+                            if (message == lowestPossibleDegree) {
+                                processStatus = STATUS_FINISHED;
+                            } else if (message < minDegree) {
+                                minDegree = message;
+                            }
+                            break;
+                        case MSG_FINISH:
                             break;
                     }
 
                 }
+                /*DFS Start*//*
+                //vemu si cestu neboli vraceni se o uroven zpet
+                StackItem* path = stack->pop();
+                //pomocna cesta
+                StackItem* aaa = 0;
+                //projdu vsechny mozne cesty v grafu
+                for (int it = 0; it < edges->getSize(); it++) {
+                    Edge* e = edges->getItem(it);
+                    //pokud bude hrana v ceste, neboli uz jsme hranu navstivili, tak nas hrana nezajima
+                    if (isEdgeInPath(e, path)) {
+                        continue;
+                    }
+                    //pokud pridana hrana nevytvori cyklus
+                    if (!isCycle(e, path)) {
+                        // vytvorim novou cestou, kterou pozdeji ulozim na zasobnik
+                        //predam ji v konstruktoru dosavadni cestu
+                        aaa = new StackItem(*path);
+                        //pridam zkoumanou hranu do cesty
+                        aaa->addEdge(e);
+                        //spocitam jeji stupen s novou hranou
+                        aaa->countDegree();
+
+                        //zkoumam zda dana cesta nema vetsi stupen nez dosavadni nalezeny
+                        if (minDegreeInited && aaa->getMaxDegree() > minDegree) {
+                            //pokud ano, tak orezavam :)
+                            delete(aaa);
+                            aaa = NULL;
+                            continue;
+                        }
+                        //pokud mam narok na kostru
+                        if (aaa->pathSize() == k) {
+                            //Vypis
+                            //cout<<"Kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
+
+                            //pokud je menšího stupně zapamatuji si
+                            if (!minDegreeInited || aaa->getMaxDegree() < minDegree) {
+                                minDegree = aaa->getMaxDegree();
+                                if (minSpanningTree != NULL) {
+                                    delete minSpanningTree;
+                                    minSpanningTree = NULL;
+                                }
+                                if (minDegree == lowestPossibleDegree) {
+                                    processStatus = STATUS_FINISHED;
+                                }
+                                //vypis
+                                //cout << "Nova min kostra: " << (*aaa) << " |" << aaa->getMaxDegree() << endl;
+                                minSpanningTree = aaa;
+                                minDegreeInited = true;
+                                //Jelikoz jsem nasel nejlepsi minimum, tak ho odeslu vsem procesorum
+                                for (int i = 0; i < processorCount; i++) {
+                                    if (i != my_rank) {
+                                        //cout << "Odesilam New minimum " << minDegree << " do " << i << endl;
+                                        MPI_Send(&minDegree, 1, MPI_INT, i, MSG_NEW_MINIMUM, MPI_COMM_WORLD);
+                                    }
+                                }
+
+                            } else {
+                                delete aaa;
+                                aaa = NULL;
+                            }
+                            //dal nemusim prohledavat strom => orezavan
+                            continue;
+                            //ne break, jelikoz ten zahodi celou hladinu
+                        } else {
+                            //nemam kostru tak pokracuji
+                            //a celou cestu hodime na zasobnik
+                            stack->push(aaa);
+                        }
+                    }
+                    delete path;
+                    path = NULL;
+                }*/
+                /*DFS End*/
+
                 //a dale jiz pokracuje samotny vypocet....
-                cout << "Procesor cislo " << my_rank << " pracuje :)" << endl;
-                counter++;
+                cout << my_rank << ":Procesor cislo " << my_rank << " pracuje :)" << endl;
+                cout << my_rank << "Zbyva prvku na zasobniku: " << stack->getSize() << endl; 
+                stack->pop();
+                /*counter++;
                 if (counter == 5) {
                     processStatus = STATUS_FINISHED;
                     break;
-                };
-            }
-        }
+                }*/
+            }//end of while
+            //TODO rozmyslet !!!
+            /*Pokud predchazejici cyklus skonci, tak to znamena, ze je prazdny zasobnik*/
+            if (stack->is_empty()){
+            processStatus = STATUS_IDLE;
+            cout << my_rank << ":zasobnik is empty" << endl;
+            } 
+        }//end of main while
 
     }
-    MPI_Finalize();
-    //Main* app = new Main(NUMBER_OF_VERTEX);
-    //app->loadEdges(arr);
+    
+    
+    //MPI_Barrier(MPI_COMM_WORLD);
+    //cout << "MPI_Barrier END" << endl;
 
-    //app->DFS(6);
-    /*
-    Main* app2 = new Main();
-    app2->loadEdges(new int[][]{
-        {0, 1, 1},
-        {1, 0, 1},
-        {1, 1, 0}});
-    //app2.DFS(2);
-     */
+    if (my_rank == 0) {
+        time2 = MPI_Wtime();
+
+        double totalTime = time2 - time1;
+
+        cout << "Celkovy cas vypoctu: " << totalTime << endl;
+        printf("Spotrebovany cas je %f.\n", totalTime);
+    }
+
+    //TODO vypis nejlepsi kostry a stupne
+
+    MPI_Finalize();
     return 0;
 }
