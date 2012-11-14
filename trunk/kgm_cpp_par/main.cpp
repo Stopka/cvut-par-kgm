@@ -155,7 +155,8 @@ int main(int argc, char** argv) {
     MPI_Barrier(MPI_COMM_WORLD);
     cout << "MPI_Barrier END" << endl;
     /*KONEC INICIALIZACE*/
-    int blbost = 0;
+    
+        int counter = 0;
     while (processStatus != STATUS_FINISHED) {
 
         //optimalizacni vec, mozna ale zbytecna - rozmyslet
@@ -204,6 +205,7 @@ int main(int argc, char** argv) {
                         processStatus = STATUS_WORKING;
                         cout << "[MPI_WORK_RECEIVED] Process:" << my_rank << "dostal praci" << endl;
                         cout << "Item:" << *item << endl << flush;
+                        wasRequestedForWork = false;
                         break;
                     }
                         /*Zamitava odpoved na zadost o práci*/
@@ -211,6 +213,7 @@ int main(int argc, char** argv) {
                         MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
                         processStatus = STATUS_IDLE;
                         cout << "[MPI_Recv NO?WORK] " << my_rank << endl;
+                        wasRequestedForWork = false;
                         break;
                         /*Prisel pesek zajistujici ukonceni vypoctu ADUV*/
                     case MSG_TOKEN:
@@ -242,14 +245,9 @@ int main(int argc, char** argv) {
                         break;
                 }
             }
-            blbost++;
-            if (blbost == 5) {
-                processStatus = STATUS_FINISHED;
-                break;
-            }
+         
 
         }/*End of IDLE*/
-        int counter = 0;
         //chovani procesu pri praci
         if (processStatus == STATUS_WORKING) {
             while (!stack->is_empty() && processStatus != STATUS_FINISHED) {
@@ -276,10 +274,14 @@ int main(int argc, char** argv) {
                                 MPI_Send(0, 0, MPI_INT, status.MPI_SOURCE, MSG_WORK_NOWORK, MPI_COMM_WORLD);
                             }
                             break;
+                        case MSG_NEW_MINIMUM:
+                            //TODO obslouzit, kdyz dostanu nove minimum
+                            break;
                     }
 
                 }
                 //a dale jiz pokracuje samotny vypocet....
+                cout << "Procesor cislo " << my_rank << " pracuje :)" << endl;
                 counter++;
                 if (counter == 5) {
                     processStatus = STATUS_FINISHED;
