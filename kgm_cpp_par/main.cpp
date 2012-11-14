@@ -1,6 +1,6 @@
 /* 
  * File:   main.cpp
- * Author: stopka
+ * Author: stopka, Lukas
  *
  * Created on 21. říjen 2012, 14:30
  */
@@ -9,7 +9,9 @@
 #include <fstream>
 #include <iostream>
 #include <mpi/mpi.h>
-#include "Main.h"
+#include "Stack.h"
+#include "List.h"
+//#include "Main.h"
 
 #define CHECK_MSG_AMOUNT  100
 #define MSG_WORK_REQUEST 1000
@@ -23,44 +25,22 @@
 #define STATUS_IDLE     2002
 #define STATUS_FINISHED 2999
 
+#define WHITE_PROCESS 3001
+#define BLACK_PROCESS 3002
+
+#define WHITE_TOKEN 3003
+#define BLACK_TOKEN 3004
+
 using namespace std;
 const char* file_name = "graph.txt";
+Stack* stack = new Stack();
+List* edges;
+int NUMBER_OF_VERTEX = 0;
 
 /*
  * 
  */
-int main(int argc, char** argv) {
-    /*
-    int myrank, nprocs;
-
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    printf("Hello from processor %d of %d\n", myrank, nprocs);
-
-    MPI_Finalize();
-     */
-    int NUMBER_OF_VERTEX = 0;
-    ifstream file;
-    string line;
-    file.open(file_name);
-    file >> NUMBER_OF_VERTEX;
-    cout << NUMBER_OF_VERTEX << endl;
-    getline(file, line);
-    int** arr = new int*[NUMBER_OF_VERTEX];
-    for (int row = 0; row < NUMBER_OF_VERTEX; row++) {
-        arr[row] = new int[NUMBER_OF_VERTEX];
-        getline(file, line);
-        for (int col = 0; col < NUMBER_OF_VERTEX; col++) {
-            arr[row][col] = line[col] - '0';
-            cout << arr[row][col];
-        }
-        cout << endl;
-    }
-    int dfsK = NUMBER_OF_VERTEX - 1;
-
-
+int main(int argc, char** argv) {    
     /*Inicializace MPI promennych*/
     /*Cislo procesu - 0 je master*/
     int my_rank;
@@ -71,31 +51,16 @@ int main(int argc, char** argv) {
     /*Aktualni stav procesu*/
     int processStatus = 0;
     MPI_Status status;
+    /*Priznak MPI zprav*/
     int flag;
+    /*Proces, ktery je pozadan o praci*/
     int processToAskForWork;
-    /*
-    int NUMBER_OF_VERTEX = 6;
-    int dfsK = 5;
-    int** arr = new int*[NUMBER_OF_VERTEX];
-    arr[0] = new int[NUMBER_OF_VERTEX]{0, 1, 0, 0, 1, 0};
-    arr[1] = new int[NUMBER_OF_VERTEX]{1, 0, 1, 0, 1, 0};
-    arr[2] = new int[NUMBER_OF_VERTEX]{0, 1, 0, 1, 0, 0};
-    arr[3] = new int[NUMBER_OF_VERTEX]{0, 0, 1, 0, 1, 1};
-    arr[4] = new int[NUMBER_OF_VERTEX]{1, 1, 0, 1, 0, 0};
-    arr[5] = new int[NUMBER_OF_VERTEX]{0, 0, 0, 1, 0, 0};
-    /*//*
-    int NUMBER_OF_VERTEX=3;
-    int** arr = new int*[NUMBER_OF_VERTEX];
-    arr[0] = new int[NUMBER_OF_VERTEX]{0, 1, 1};
-    arr[1] = new int[NUMBER_OF_VERTEX]{1, 0, 1};
-    arr[2] = new int[NUMBER_OF_VERTEX]{1, 1, 0};
-    /**/
-    /***
-     * Pokud budes zkouset jine grafy, tak se musi upravit konstanta na pocet vrcholu!!!!
-     * a samozrejme parametr k u metody DFS
-     */
-
-
+    /*Posílaná data*/
+    int message[300];
+    /*pešek*/
+    int pesek;
+    /*barva procesu*/
+    int color;
 
     /* Inicializace MPI prostředí */
     MPI_Init(&argc, &argv);
@@ -118,49 +83,70 @@ int main(int argc, char** argv) {
 
     /*praci rozdeluje procesor 0 - master pro tuto chvili*/
     if (my_rank == 0) {
-        cout << "zacinam rozesilat" << endl;
-
-        //od 1, jelikoz procesor 0 rozdeluje praci
-        for (int i = 1; i < processorCount; i++) {
-            //TODO z edges vemu hranu a posli ji na zpracovani procesoru
-            /*Pokud je co brát*/
-            if (true){
-                Edge* e; /*= edges->getItem(i)*/
-                //TODO praci poslu procesoru i
-                //sendFirstWork(i, e);
-                cout << "Poslal jsem praci procesu " << i << endl; 
-            //neni prace    
-            }else{
-                MPI_Send(0, 0, MPI_INT, i, MSG_WORK_NOWORK, MPI_COMM_WORLD);
-                cout << "Poslal jsem NO_WORK procesu " << i << endl;
+        ifstream file;
+        string line;
+        file.open(file_name);
+        file >> NUMBER_OF_VERTEX;
+        //cout << NUMBER_OF_VERTEX << endl;
+        getline(file, line);
+        int** adjMatrix = new int*[NUMBER_OF_VERTEX];
+        for (int row = 0; row < NUMBER_OF_VERTEX; row++) {
+            adjMatrix[row] = new int[NUMBER_OF_VERTEX];
+            getline(file, line);
+            for (int col = 0; col < NUMBER_OF_VERTEX; col++) {
+                adjMatrix[row][col] = line[col] - '0';
+                //          cout << arr[row][col];
             }
+            //    cout << endl;
         }
-        //na stack daneho procesoru si ulozit praci a zbytek ulozit na "master stack"
-        
-       processStatus = STATUS_WORKING;
+        int dfsK = NUMBER_OF_VERTEX - 1;
 
-    } else {
-        /*Nejsem hlavni proces, co rozdeluje prace => bud praci dostanu nebo ne*/
-        while (processStatus == 0) {
-            MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
-            if (flag) {
 
-                switch (status.MPI_TAG) {
-                        /*Prisla zadost o praci, jsem IDLE, posilam tedy NO_WORK*/
-                    case MSG_WORK_NOWORK:
-                        MPI_Recv(0, 0, MPI_INT, 0, MSG_WORK_NOWORK, MPI_COMM_WORLD, &status);
-                        processStatus = STATUS_IDLE;
-                        break;
-                    case MSG_WORK_SENT:
-                        //receiveFirstWork(&status,myStack)
-                        processStatus = STATUS_WORKING;
-                        break;
+        edges = new List();
+        int k = 0;
+        //projdu celou matici
+        for (int i = 0; i < NUMBER_OF_VERTEX; i++) {
+            for (int j = 0; j < NUMBER_OF_VERTEX; j++) {
+                //pokud narazim na hranu
+                if (adjMatrix[i][j] == 1) {
+                    //tak ji vytvorim
+                    edges->add(new Edge(i, j, k));
+                    //a vymazu druhy vyskyt, abych nemel duplicity
+                    adjMatrix[i][j] = 0;
+                    adjMatrix[j][i] = 0;
+                    k++;
+
                 }
             }
         }
 
-    }
+        /*prvotni naplneni zasobniku*/
+        for (int i = 0; i < edges->getSize(); i++) {
+            Edge* e = edges->getItem(i);
+            //vytvorim zaznam (linked list)
+            StackItem* path = new StackItem(new List(), NUMBER_OF_VERTEX);
+            //vlozim hranu
+            path->addEdge(e);
 
+            //Vypis
+            //cout<<"INIT ";
+            //a cestu v grafu vlozim na zasobnik
+            stack->push(path);
+        }
+        processStatus = STATUS_WORKING;
+       
+    } else {
+        //na zacatku nemam praci
+        processStatus = STATUS_IDLE;
+    }
+     
+    
+    
+    MPI_Finalize();
+    return 0;
+    
+    /*obarvime proces na bilou*/
+    color = WHITE_PROCESS;
     /*Nastaveni koho se ptat na praci - aby nedoslo zbytecne k hromadnemu ptani se procesu 0*/
     processToAskForWork = (my_rank + 1) % processorCount;
 
@@ -168,13 +154,107 @@ int main(int argc, char** argv) {
     cout << "MPI_Barrier INIT WORK SENT" << endl;
     /*KONEC INICIALIZACE*/
 
+    while (processStatus != STATUS_FINISHED) {
+
+        //optimalizacni vec, mozna ale zbytecna - rozmyslet
+        if ((my_rank == 0) && (processorCount == 1) && (processStatus == STATUS_IDLE)) {
+            processStatus = STATUS_FINISHED;
+        }
+        //TODO - dodelat pesky, neboli algoritmus pro distribuovane ukonceni vypoctu :P
+
+        //chovani procesu pri vyckani
+        if (processStatus == STATUS_IDLE) {
+            //jsme IDLE a procesor 0 -> musime barvit a rozesla peska
+            if (my_rank == 0) {
+                color = WHITE_PROCESS;
+                pesek = WHITE_PROCESS;
+                MPI_Send(&pesek, 1, MPI_INT, 1, MSG_TOKEN, MPI_COMM_WORLD);
+            }
+            //jelikoz jsem IDLE, tak bych mel pozadat o praci
+            int target = processToAskForWork % processorCount;
+            if (target != my_rank) {
+                cout << "Zadost o praci: " << my_rank << " zada proces " << target << " o praci" << endl;
+                MPI_Send(0, 0, MPI_INT, target, MSG_WORK_REQUEST, MPI_COMM_WORLD);
+            }
+            processToAskForWork++;
+
+            //i v IDLE stavu musim obslouzit prichozi zpravy - zejmena peska a prichozi praci
+            MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+
+            if (flag) {
+                switch (status.MPI_TAG) {
+                        /*Prisla zadost o praci, jsem IDLE, posilam tedy NO_WORK*/
+                    case MSG_WORK_REQUEST:
+                        MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+                        MPI_Send(0, 0, MPI_INT, status.MPI_SOURCE, MSG_WORK_NOWORK, MPI_COMM_WORLD);
+                        cout << "[MPI_Recv] " << "Sender: " << status.MPI_SOURCE << " Target " << my_rank << " Message: " << status.MPI_TAG << endl;
+                        break;
+                        /*Prisla prace*/
+                    case MSG_WORK_SENT:
+                        //TODO - prisla prace -> deserializovat data a praci si hodit na zasobnik 
+                        processStatus = STATUS_WORKING;
+                        cout << "[MPI_WORK_RECEIVED] Process:" << my_rank << endl;
+                        break;
+                        /*Zamitava odpoved na zadost o práci*/
+                    case MSG_WORK_NOWORK:
+                        MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+                        processStatus = STATUS_IDLE;
+                        cout << "[MPI_Recv NO?WORK] " << my_rank << endl;
+                        break;
+                        /*Prisel pesek zajistujici ukonceni vypoctu ADUV*/
+                    case MSG_TOKEN:
+                        cout << "[MPI_Recv] " << "Sender: " << status.MPI_SOURCE << " Target " << my_rank << " Message: " << status.MPI_TAG << endl;
+                        MPI_Recv(&pesek, 1, MPI_INT, status.MPI_SOURCE, MSG_TOKEN, MPI_COMM_WORLD, &status);
+                        if ((my_rank == 0) && (pesek == BLACK_PROCESS)) {
+                            cout << "MASTER PRIJAL BLACK TOKEN" << endl;
+                        }
+                        if ((my_rank == 0) && (pesek == WHITE_PROCESS)) {
+                            processStatus = STATUS_FINISHED;
+                            cout << "MAIN PROCESS STATUS_FINISHED" << endl;
+                        } else {
+                            if ((color == BLACK_PROCESS)) {
+                                pesek = BLACK_PROCESS;
+                            }
+                        }
+                        break;
+                        /*Prislo nove minimum*/
+                    case MSG_NEW_MINIMUM:
+                        int message;
+                        MPI_Recv(&message, 1, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
+                        //TODO dale oblouszit
+                    case MSG_FINISH:
+                        MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MSG_FINISH, MPI_COMM_WORLD, &status);
+                        processStatus = STATUS_FINISHED;
+                        cout << "[MPI_Recv] " << "Sender: " << status.MPI_SOURCE << " Target " << my_rank << " Message: " << status.MPI_TAG << endl;
+                        break;
+                    default:; //chyba("neznamy typ zpravy");
+                        break;
+                }
+            }
 
 
+        }/*End of IDLE*/
 
-    Main* app = new Main(NUMBER_OF_VERTEX);
-    app->loadEdges(arr);
+        //chovani procesu pri praci
+        if (processStatus == STATUS_WORKING) {
+            while (!stack->is_empty() && processStatus != STATUS_FINISHED) {
+                MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+                if (flag) {
+                    //obdobne se musi obslouzit zpravy
+                    switch (status.MPI_TAG) {
 
-    app->DFS(dfsK);
+                    }
+
+                }
+                //a dale jiz pokracuje samotny vypocet....
+            }
+        }
+    }
+
+    //Main* app = new Main(NUMBER_OF_VERTEX);
+    //app->loadEdges(arr);
+
+    //app->DFS(6);
     /*
     Main* app2 = new Main();
     app2->loadEdges(new int[][]{
