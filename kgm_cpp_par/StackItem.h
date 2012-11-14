@@ -18,6 +18,7 @@ class StackItem {
 public:
     StackItem(List* list,int NUMBER_OF_VERTEX);
     StackItem(const StackItem& orig);
+    StackItem(int *array, int count);
     virtual ~StackItem();
     void addEdge(Edge* e);
     bool isContainsEdge(Edge* e);
@@ -34,6 +35,8 @@ public:
     int getMaxDegree();
     List* getPath();
     int* getVertexArray();
+    int* serialize();
+    StackItem(int* id_array, List* edges, int NUMBER_OF_VERTEX);
 private:
     List* path;
     int pathDeegre;

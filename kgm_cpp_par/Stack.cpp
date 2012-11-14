@@ -54,6 +54,23 @@ int Stack::count() const {
     return size;
 }
 
+StackItem* Stack::popLast(){
+    StackNode* node=first_node;
+    StackNode* previous;
+    while(node->next!=NULL){
+        previous=node;
+        node=node->next;
+    }
+    StackItem* result=node->content;
+    previous->next=NULL;
+    delete(node);
+    return result;
+}
+
+int Stack::getSize(){
+    return size;
+}
+
 ostream& operator<<(ostream& os,const Stack& e){
     os<<"|||||STACK||||||||"<<endl;
     StackNode* node=e.first_node;

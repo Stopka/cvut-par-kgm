@@ -9,8 +9,8 @@
 #include "Stack.h"
 #include "Main.h"
 
-StackItem::StackItem(List* list,int NUMBER_OF_VERTEX) {
-    this->NUMBER_OF_VERTEX=NUMBER_OF_VERTEX;
+StackItem::StackItem(List* list, int NUMBER_OF_VERTEX) {
+    this->NUMBER_OF_VERTEX = NUMBER_OF_VERTEX;
     path = list; //(list<Edge>) list.clone();
     vertex = new int[NUMBER_OF_VERTEX];
     //jelikoz z kazdeho vrcholu vychazi hrana, tak ma minimalne stupen 1
@@ -19,13 +19,22 @@ StackItem::StackItem(List* list,int NUMBER_OF_VERTEX) {
 }
 
 StackItem::StackItem(const StackItem& orig) {
-    this->NUMBER_OF_VERTEX=orig.NUMBER_OF_VERTEX;
+    this->NUMBER_OF_VERTEX = orig.NUMBER_OF_VERTEX;
     this->path = new List(*orig.path);
     vertex = new int[NUMBER_OF_VERTEX];
-    for(int i=0;i<NUMBER_OF_VERTEX;i++){
-        vertex[i]=orig.vertex[i];
+    for (int i = 0; i < NUMBER_OF_VERTEX; i++) {
+        vertex[i] = orig.vertex[i];
     }
     pathDeegre = orig.pathDeegre;
+}
+
+StackItem::StackItem(int* array, int count) {
+    this->path = new List();
+    int k = 0;
+    for (int i = 0; i < count; i++) {
+        path->add(new Edge(array[k], array[k + 1], array[k + 2]));
+        k = k + 3;
+    }
 }
 
 StackItem::~StackItem() {
@@ -134,4 +143,23 @@ List* StackItem::getPath() {
 
 int* StackItem::getVertexArray() {
     return this->vertex;
+}
+
+int* StackItem::serialize() {
+    int* serMatrix = new int[path->getSize() + 1];
+    serMatrix[0] = path->getSize();
+    for (int i = 0; i < path->getSize(); i++) {
+        serMatrix[i + 1] = path->getItem(i)->getId();
+    }
+    return serMatrix;
+}
+
+StackItem::StackItem(int* id_array, List* edges, int NUMBER_OF_VERTEX) {
+    this->NUMBER_OF_VERTEX = NUMBER_OF_VERTEX;
+    this->path = new List();
+    this->vertex = new int[NUMBER_OF_VERTEX];
+    for (int i = 1; i < (id_array[0] + 1); i++) {
+        this->addEdge(edges->findById(id_array[i]));
+        this->countDegree();
+    }
 }

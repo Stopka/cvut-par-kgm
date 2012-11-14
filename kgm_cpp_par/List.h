@@ -37,6 +37,7 @@ public:
     void remove(Edge* edge);
     void removeLast();
     Edge* getItem(int index);
+    Edge* findById(int id);
 private:
     int size;
     ListNode* first_node;
