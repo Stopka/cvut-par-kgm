@@ -273,7 +273,7 @@ int main(int argc, char** argv) {
                         stack->push(item);
                         processStatus = STATUS_WORKING;
                         cout << "[MPI_WORK_RECEIVED] Process:" << my_rank << "dostal praci" << endl;
-                        cout << "Item:" << *item << endl << flush;
+                        cout << my_rank << ":Item:" << *item << endl << flush;
                         wasRequestedForWork = false;
                         break;
                     }
@@ -344,7 +344,7 @@ int main(int argc, char** argv) {
                             //TODO tohle taky rozmyslet, zda by to optimalizacne slo udelat lepe
                             if (stack->getSize() > 2) {
                                 StackItem* item = stack->popLast();
-                                cout << *item << endl;
+                                //cout << *item << endl;
                                 data = item->serialize();
                                 cout << my_rank << ":Prace odeslana" << endl;
                                 MPI_Send(data, data[0] + 1, MPI_INT, status.MPI_SOURCE, MSG_WORK_SENT, MPI_COMM_WORLD);
@@ -385,7 +385,7 @@ int main(int argc, char** argv) {
                     }
 
                 }
-                /*DFS Start*//*
+                /*DFS Start*/
                 //vemu si cestu neboli vraceni se o uroven zpet
                 StackItem* path = stack->pop();
                 //pomocna cesta
@@ -406,7 +406,6 @@ int main(int argc, char** argv) {
                         aaa->addEdge(e);
                         //spocitam jeji stupen s novou hranou
                         aaa->countDegree();
-
                         //zkoumam zda dana cesta nema vetsi stupen nez dosavadni nalezeny
                         if (minDegreeInited && aaa->getMaxDegree() > minDegree) {
                             //pokud ano, tak orezavam :)
@@ -415,10 +414,7 @@ int main(int argc, char** argv) {
                             continue;
                         }
                         //pokud mam narok na kostru
-                        if (aaa->pathSize() == k) {
-                            //Vypis
-                            //cout<<"Kostra: "<<(*aaa)<<" |"<<aaa->getMaxDegree()<<endl;
-
+                        if (aaa->pathSize() == dfsK) {
                             //pokud je menšího stupně zapamatuji si
                             if (!minDegreeInited || aaa->getMaxDegree() < minDegree) {
                                 minDegree = aaa->getMaxDegree();
@@ -429,9 +425,9 @@ int main(int argc, char** argv) {
                                 if (minDegree == lowestPossibleDegree) {
                                     processStatus = STATUS_FINISHED;
                                 }
-                                //vypis
-                                //cout << "Nova min kostra: " << (*aaa) << " |" << aaa->getMaxDegree() << endl;
                                 minSpanningTree = aaa;
+                                cout << "Procesor " << my_rank << " nasel kostru" << *aaa << endl;
+                                cout << "Stupne" << minDegree << endl;
                                 minDegreeInited = true;
                                 //Jelikoz jsem nasel nejlepsi minimum, tak ho odeslu vsem procesorum
                                 for (int i = 0; i < processorCount; i++) {
@@ -440,7 +436,6 @@ int main(int argc, char** argv) {
                                         MPI_Send(&minDegree, 1, MPI_INT, i, MSG_NEW_MINIMUM, MPI_COMM_WORLD);
                                     }
                                 }
-
                             } else {
                                 delete aaa;
                                 aaa = NULL;
@@ -454,15 +449,17 @@ int main(int argc, char** argv) {
                             stack->push(aaa);
                         }
                     }
-                    delete path;
-                    path = NULL;
-                }*/
+                }
+                delete path;
+                path = NULL;
+               
                 /*DFS End*/
 
                 //a dale jiz pokracuje samotny vypocet....
-                cout << my_rank << ":Procesor cislo " << my_rank << " pracuje :)" << endl;
-                cout << my_rank << "Zbyva prvku na zasobniku: " << stack->getSize() << endl;
-                stack->pop();
+                /*cout << my_rank << ":Procesor cislo " << my_rank << " pracuje :)" << endl;
+                cout << my_rank << "Zbyva prvku na zasobniku: " << stack->getSize() << endl;*/
+
+                //stack->pop();
                 /*counter++;
                 if (counter == 5) {
                     processStatus = STATUS_FINISHED;
@@ -480,7 +477,7 @@ int main(int argc, char** argv) {
     }
 
 
-    //MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
     //cout << "MPI_Barrier END" << endl;
     cout << "Procesor cislo " << my_rank << "se dostal az sem" << endl;
     if (my_rank == 0) {
