@@ -8,10 +8,15 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include <mpi/mpi.h>
+#include <mpi.h>
 #include "Stack.h"
 #include "StackItem.h"
 #include "List.h"
+#include <sstream>
+#include <string>
+#include <fstream>
+#include "Logger.h"
+#include <sys/resource.h>
 //#include "Main.h"
 
 #define CHECK_MSG_AMOUNT  100
@@ -37,6 +42,20 @@ const char* file_name = "graph.txt";
 Stack* stack = new Stack();
 List* edges;
 int NUMBER_OF_VERTEX = 0;
+
+long get_program_size() {
+    //stringstream ss;
+    rusage u;
+    long pg_size;
+    pg_size = (long) getpagesize();
+    //getrusage(RUSAGE_SELF, &u);
+    ifstream proc;
+    proc.open("/proc/self/statm", ios::in);
+    long tmp;
+    proc >> tmp;
+
+    return tmp*pg_size;
+}
 
 bool isEdgePossible(Edge* e, StackItem* path) {
     return *path<*e;
@@ -266,8 +285,8 @@ int main(int argc, char** argv) {
                 if (target != my_rank) {
                     //cout << "Zadost o praci: " << my_rank << " zada proces " << target << " o praci" << endl;
                     MPI_Send(0, 0, MPI_INT, target, MSG_WORK_REQUEST, MPI_COMM_WORLD);
-                     cout << "[MPI_SEND_workP]" << "Odesilatel" << my_rank << " komu: " << target << "Kod(WorkRequest): " << MSG_WORK_REQUEST << endl;
-                                   
+                    cout << "[MPI_SEND_workP]" << "Odesilatel" << my_rank << " komu: " << target << "Kod(WorkRequest): " << MSG_WORK_REQUEST << endl;
+
                     wasRequestedForWork = true;
                 }
             }
@@ -283,7 +302,7 @@ int main(int argc, char** argv) {
                         MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
                         MPI_Send(0, 0, MPI_INT, status.MPI_SOURCE, MSG_WORK_NOWORK, MPI_COMM_WORLD);
                         cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(WorkRequest): " << status.MPI_TAG << endl;
-                        cout << "[MPI_Send_idleP]" <<  "Odesilatel: " << my_rank << "Komu: " << status.MPI_SOURCE << " Zprava(NoWork): " << MSG_WORK_NOWORK << endl;
+                        cout << "[MPI_Send_idleP]" << "Odesilatel: " << my_rank << "Komu: " << status.MPI_SOURCE << " Zprava(NoWork): " << MSG_WORK_NOWORK << endl;
                         break;
                         /*Prisla prace*/
                     case MSG_WORK_SENT:
@@ -295,15 +314,15 @@ int main(int argc, char** argv) {
                         //vlozim na zasobnik a proces muze zacit pracovat
                         stack->push(item);
                         processStatus = STATUS_WORKING;
-                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(WorkSent = "<< *item <<" ): " << status.MPI_TAG  << endl;
-                       
+                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(WorkSent = " << *item << " ): " << status.MPI_TAG << endl;
+
                         wasRequestedForWork = false;
                         break;
                     }
                         /*Zamitava odpoved na zadost o práci*/
                     case MSG_WORK_NOWORK:
                         MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(NoWORK): " << status.MPI_TAG  << endl;
+                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(NoWORK): " << status.MPI_TAG << endl;
                         processStatus = STATUS_IDLE;
                         wasRequestedForWork = false;
                         break;
@@ -313,8 +332,8 @@ int main(int argc, char** argv) {
                          * Jakmile se Pi stane idle, pošle peška po kružnici procesoru Pi+1 a nastaví svoji barvu na W. 
                          */
                         MPI_Recv(&pesek, 1, MPI_INT, status.MPI_SOURCE, MSG_TOKEN, MPI_COMM_WORLD, &status);
-                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(pesek): " << status.MPI_TAG  << endl;
-                       
+                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(pesek): " << status.MPI_TAG << endl;
+
                         /* if (color == BLACK_PROCESS) {
                              pesek = BLACK_TOKEN;
                          }
