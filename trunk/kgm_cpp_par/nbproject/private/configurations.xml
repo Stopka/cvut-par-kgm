@@ -60,6 +60,7 @@
           <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
           <runcommandpicklistitem>"mpirun${OUTPUT_PATH}"</runcommandpicklistitem>
           <runcommandpicklistitem>"mpiexec -n 5 ${OUTPUT_PATH}"</runcommandpicklistitem>
+          <runcommandpicklistitem>/usr/bin/mpiexec -n 2 "${OUTPUT_PATH}"</runcommandpicklistitem>
           <runcommandpicklistitem>/usr/bin/mpiexec -n 5 "${OUTPUT_PATH}"</runcommandpicklistitem>
         </runcommandpicklist>
         <runcommand>/usr/bin/mpiexec -n 5 "${OUTPUT_PATH}"</runcommand>

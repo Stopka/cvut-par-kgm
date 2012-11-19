@@ -61,3 +61,16 @@ ostream& operator<<(ostream& os,const Edge& e){
     }
     return os;
 }
+bool Edge::operator>(const Edge& e) const{
+    if(this->id<e.id){
+        return true;
+    }
+    return false;
+}
+
+bool Edge::operator<(const Edge& e) const{
+    if(this->id>e.id){
+        return true;
+    }
+    return false;
+}

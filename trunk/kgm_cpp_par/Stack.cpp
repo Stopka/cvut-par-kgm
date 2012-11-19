@@ -64,6 +64,7 @@ StackItem* Stack::popLast(){
     StackItem* result=node->content;
     previous->next=NULL;
     delete(node);
+    size--;
     return result;
 }
 
