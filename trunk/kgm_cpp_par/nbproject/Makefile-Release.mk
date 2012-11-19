@@ -40,7 +40,8 @@ OBJECTFILES= \
 	${OBJECTDIR}/List.o \
 	${OBJECTDIR}/Stack.o \
 	${OBJECTDIR}/Edge.o \
-	${OBJECTDIR}/Main.o
+	${OBJECTDIR}/Main.o \
+	${OBJECTDIR}/Logger.o
 
 
 # C Compiler Flags
@@ -96,6 +97,11 @@ ${OBJECTDIR}/Main.o: Main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/Main.o Main.cpp
+
+${OBJECTDIR}/Logger.o: Logger.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/Logger.o Logger.cpp
 
 # Subprojects
 .build-subprojects:
