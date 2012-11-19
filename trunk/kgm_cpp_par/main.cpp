@@ -15,7 +15,6 @@
 #include <sstream>
 #include <string>
 #include <fstream>
-#include "Logger.h"
 #include <sys/resource.h>
 //#include "Main.h"
 
@@ -42,7 +41,7 @@ const char* file_name = "graph.txt";
 Stack* stack = new Stack();
 List* edges;
 int NUMBER_OF_VERTEX = 0;
-
+/*
 long get_program_size() {
     //stringstream ss;
     rusage u;
@@ -55,7 +54,7 @@ long get_program_size() {
     proc >> tmp;
 
     return tmp*pg_size;
-}
+}*/
 
 bool isEdgePossible(Edge* e, StackItem* path) {
     return *path<*e;
