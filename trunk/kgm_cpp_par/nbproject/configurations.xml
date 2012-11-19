@@ -42,6 +42,7 @@
       <compileType>
         <ccTool>
           <stripSymbols>true</stripSymbols>
+          <commandlineTool>mpic++</commandlineTool>
           <commandLine>-Wall -pedantic</commandLine>
         </ccTool>
       </compileType>
