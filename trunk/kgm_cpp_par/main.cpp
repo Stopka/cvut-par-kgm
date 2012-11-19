@@ -42,6 +42,13 @@ bool isEdgePossible(Edge* e, StackItem* path) {
     return *path<*e;
 }
 
+bool isEdgePossible2(Edge* e, StackItem* path) {
+    if (path->getLastEdge()->getId() <  e->getId()){
+        return true;
+    }
+    return false;
+}
+
 bool isEdgeInPath(Edge* e, StackItem* path) {
     return path->isContainsEdge(e);
 }
@@ -413,7 +420,7 @@ int main(int argc, char** argv) {
                                 }
                                 break;
                             case MSG_FINISH:
-                            
+                             
                                 MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MSG_FINISH, MPI_COMM_WORLD, &status);
                                 cout << my_rank << ":prijal finish" << endl;
                                 processStatus = STATUS_FINISHED;
@@ -458,12 +465,12 @@ int main(int argc, char** argv) {
                 for (int it = 0; it < edges->getSize(); it++) {
                     Edge* e = edges->getItem(it);
                     //pokud bude hrana v ceste, neboli uz jsme hranu navstivili, tak nas hrana nezajima
-                    if (isEdgeInPath(e, path)) {
-                        continue;
-                    }/*
-                    if (!isEdgePossible(e, path)) {
+                    /*if (isEdgeInPath(e, path)) {
                         continue;
                     }*/
+                    if (!isEdgePossible2(e, path)) {
+                        continue;
+                    }
 
                     //pokud pridana hrana nevytvori cyklus
                     if (!isCycle(e, path)) {
@@ -536,7 +543,7 @@ int main(int argc, char** argv) {
 
     }
 
-
+    cout << my_rank << "sem tu" << endl;
     MPI_Barrier(MPI_COMM_WORLD);
     //cout << "MPI_Barrier END" << endl;
 
@@ -544,13 +551,15 @@ int main(int argc, char** argv) {
         time2 = MPI_Wtime();
 
         double totalTime = time2 - time1;
-        cout << *minSpanningTree << " | " << minDegree << endl;
         cout << "Celkovy cas vypoctu: " << totalTime << endl;
         printf("Spotrebovany cas je %f.\n", totalTime);
     }
 
     //vysledky
-
+    if (minSpanningTree!= NULL){
+        cout << my_rank << " | " << *minSpanningTree << " | " << minDegree << endl;
+        
+    }
 
 
 
