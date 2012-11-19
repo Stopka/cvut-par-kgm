@@ -1,4 +1,6 @@
-/* 
+
+
+/*
  * File:   StackItem.h
  * Author: stopka
  *
@@ -6,7 +8,7 @@
  */
 
 #ifndef STACKITEM_H
-#define	STACKITEM_H
+#define STACKITEM_H
 
 #include "List.h"
 #include <iostream>
@@ -17,8 +19,8 @@ class StackItem {
     friend ostream& operator<<(ostream& os, const StackItem& s);
 public:
     StackItem(List* list,int NUMBER_OF_VERTEX);
+    StackItem(int* id_array,List* edges,int NUMBER_OF_VERTEX);
     StackItem(const StackItem& orig);
-    StackItem(int *array, int count);
     virtual ~StackItem();
     void addEdge(Edge* e);
     bool isContainsEdge(Edge* e);
@@ -35,13 +37,12 @@ public:
     int getMaxDegree();
     List* getPath();
     int* getVertexArray();
+    bool operator<(const Edge& e);
     int* serialize();
-    StackItem(int* id_array, List* edges, int NUMBER_OF_VERTEX);
 private:
     List* path;
     int pathDeegre;
     int* vertex;
     int NUMBER_OF_VERTEX;
 };
-#endif	/* STACKITEM_H */
-
+#endif  /* STACKITEM_H */

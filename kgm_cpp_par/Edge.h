@@ -23,6 +23,8 @@ public:
     int getStart() const;
     void setStart(int start);
     bool operator==(const Edge& e) const;
+    bool operator<(const Edge& e) const;
+    bool operator>(const Edge& e) const;
 
 private:
     int end;
