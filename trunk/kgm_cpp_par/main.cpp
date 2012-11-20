@@ -521,9 +521,8 @@ int main(int argc, char** argv) {
     }
 
     //vysledky
-    if (minSpanningTree != NULL) {
-        out << my_rank << " | " << *minSpanningTree << " | " << minSpanningTree->getMaxDegree() << endl << flush;
-
+    if (minSpanningTree != NULL) { 
+        cout << endl << "[" << my_rank << "] RESULT " << endl << "- degree: " << minSpanningTree->getMaxDegree() << endl << "- spanning tree: " << *minSpanningTree << endl << endl << flush;
     }
 #ifdef LOG
     out.close();
