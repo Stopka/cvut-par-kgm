@@ -522,7 +522,7 @@ int main(int argc, char** argv) {
 
     //vysledky
     if (minSpanningTree != NULL) {
-        out << my_rank << " | " << *minSpanningTree << " | " << minDegree << endl << flush;
+        out << my_rank << " | " << *minSpanningTree << " | " << minSpanningTree->getMaxDegree() << endl << flush;
 
     }
 #ifdef LOG
