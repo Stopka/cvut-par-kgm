@@ -5,19 +5,17 @@
  * Created on 21. říjen 2012, 14:30
  */
 
+#define LOG
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
-#include <mpi.h>
+#include <mpi/mpi.h>
 #include "Stack.h"
 #include "StackItem.h"
 #include "List.h"
 #include <sstream>
 #include <string>
 #include <fstream>
-#include <sys/resource.h>
 //#include "Main.h"
-
 #define CHECK_MSG_AMOUNT  100
 #define MSG_WORK_REQUEST 1000
 #define MSG_WORK_SENT    1001
@@ -41,20 +39,6 @@ const char* file_name = "graph.txt";
 Stack* stack = new Stack();
 List* edges;
 int NUMBER_OF_VERTEX = 0;
-/*
-long get_program_size() {
-    //stringstream ss;
-    rusage u;
-    long pg_size;
-    pg_size = (long) getpagesize();
-    //getrusage(RUSAGE_SELF, &u);
-    ifstream proc;
-    proc.open("/proc/self/statm", ios::in);
-    long tmp;
-    proc >> tmp;
-
-    return tmp*pg_size;
-}*/
 
 bool isEdgePossible(Edge* e, StackItem* path) {
     return *path<*e;
@@ -167,7 +151,7 @@ int main(int argc, char** argv) {
 
     /*procesy musi cekat, nez se rozdeli data*/
     MPI_Barrier(MPI_COMM_WORLD);
-    cout << "MPI_Barrier START" << endl<<flush;
+    cout << "MPI_Barrier START" << endl << flush;
 
     ifstream file;
     string line;
@@ -205,8 +189,16 @@ int main(int argc, char** argv) {
             }
         }
     }
-
-
+    //LOG do souboru
+#ifdef LOG
+    stringstream log_file;
+    log_file << "log_" << my_rank;
+    ofstream out;
+    out.open (log_file.str().c_str());
+#endif
+#ifndef LOG
+    ostream& out = cout;
+#endif
 
     /*nastavim casovac - pro pocitani celkoveho casu programu*/
     if (my_rank == 0) {
@@ -225,7 +217,7 @@ int main(int argc, char** argv) {
             path->addEdge(e);
 
             //Vypis
-            //cout<<"INIT ";
+            //out<<"INIT ";
             //a cestu v grafu vlozim na zasobnik
             stack->push(path);
         }
@@ -242,7 +234,7 @@ int main(int argc, char** argv) {
     processToAskForWork = (my_rank + 1) % processorCount;
 
     MPI_Barrier(MPI_COMM_WORLD);
-    cout << "MPI_Barrier END" << endl<<flush;
+    out << "MPI_Barrier END" << endl << flush;
     /*KONEC INICIALIZACE*/
 
     int counter = 0;
@@ -265,7 +257,7 @@ int main(int argc, char** argv) {
                 //ADUV bod 3
             } else if ((pesek != 0) && (my_rank != 0)) {
                 if (color == BLACK_PROCESS) {
-                        pesek = BLACK_TOKEN;
+                    pesek = BLACK_TOKEN;
                 }
                 int next_rank = (my_rank + 1) % processorCount;
                 MPI_Send(&pesek, 1, MPI_INT, next_rank, MSG_TOKEN, MPI_COMM_WORLD);
@@ -277,9 +269,8 @@ int main(int argc, char** argv) {
             int target = processToAskForWork % processorCount;
             if (!wasRequestedForWork) {
                 if (target != my_rank) {
-                    //cout << "Zadost o praci: " << my_rank << " zada proces " << target << " o praci" << endl<<flush;
                     MPI_Send(0, 0, MPI_INT, target, MSG_WORK_REQUEST, MPI_COMM_WORLD);
-                    cout << "[MPI_SEND_workP]" << "Odesilatel" << my_rank << " komu: " << target << "Kod(WorkRequest): " << MSG_WORK_REQUEST << endl<<flush;
+                    out << "[MPI_SEND_workP] (" <<  my_rank << ">" << target << ") WorkRequest " << MSG_WORK_REQUEST << endl << flush;
 
                     wasRequestedForWork = true;
                 }
@@ -294,9 +285,9 @@ int main(int argc, char** argv) {
                         /*Prisla zadost o praci, jsem IDLE, posilam tedy NO_WORK*/
                     case MSG_WORK_REQUEST:
                         MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+                        out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") WorkRequest " << status.MPI_TAG << endl << flush;
                         MPI_Send(0, 0, MPI_INT, status.MPI_SOURCE, MSG_WORK_NOWORK, MPI_COMM_WORLD);
-                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(WorkRequest): " << status.MPI_TAG << endl<<flush;
-                        cout << "[MPI_Send_idleP]" << "Odesilatel: " << my_rank << "Komu: " << status.MPI_SOURCE << " Zprava(NoWork): " << MSG_WORK_NOWORK << endl<<flush;
+                        out << "[MPI_SEND_idleP] (" <<  my_rank << ">" << status.MPI_SOURCE << ") NoWork " << MSG_WORK_NOWORK << endl << flush;
                         break;
                         /*Prisla prace*/
                     case MSG_WORK_SENT:
@@ -308,15 +299,15 @@ int main(int argc, char** argv) {
                         //vlozim na zasobnik a proces muze zacit pracovat
                         stack->push(item);
                         processStatus = STATUS_WORKING;
-                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(WorkSent = " << *item << " ): " << status.MPI_TAG << endl<<flush;
-
+                        out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") WorkSent=" << *item << status.MPI_TAG << endl << flush;
+                        //out << *stack;
                         wasRequestedForWork = false;
                         break;
                     }
                         /*Zamitava odpoved na zadost o práci*/
                     case MSG_WORK_NOWORK:
                         MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(NoWORK): " << status.MPI_TAG << endl<<flush;
+                        out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") NoWork " << status.MPI_TAG << endl << flush;
                         processStatus = STATUS_IDLE;
                         wasRequestedForWork = false;
                         break;
@@ -326,29 +317,29 @@ int main(int argc, char** argv) {
                          * Jakmile se Pi stane idle, pošle peška po kružnici procesoru Pi+1 a nastaví svoji barvu na W. 
                          */
                         MPI_Recv(&pesek, 1, MPI_INT, status.MPI_SOURCE, MSG_TOKEN, MPI_COMM_WORLD, &status);
-                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(pesek): " << status.MPI_TAG << endl<<flush;
-
-                         if ((my_rank == 0) && (pesek == BLACK_TOKEN)) {
-                             //přišel černý token, vynulujeme info poslání peška (měl by se při stavu idle poslat nový bílý pešek
-                             wasPesekSent=false;
-                         } else if ((my_rank == 0) && (pesek == WHITE_TOKEN)) {
-                             //přišel bílý pešek, končíme práci
-                             processStatus = STATUS_FINISHED;
-                             for (int i = 1; i < processorCount; i++) {
-                                 cout << "Dobehl bily pesek " << endl<<flush;
-                                 MPI_Send(&minDegree, 1, MPI_INT, i, MSG_NEW_MINIMUM, MPI_COMM_WORLD);
-
-                             }
-                         }
+                        out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") Pesek " << status.MPI_TAG << endl << flush;
 
                         if ((my_rank == 0) && (pesek == BLACK_TOKEN)) {
-                            cout << "MASTER PRIJAL BLACK TOKEN" << endl<<flush;
+                            //přišel černý token, vynulujeme info poslání peška (měl by se při stavu idle poslat nový bílý pešek
+                            wasPesekSent = false;
+                        } else if ((my_rank == 0) && (pesek == WHITE_TOKEN)) {
+                            //přišel bílý pešek, končíme práci
+                            processStatus = STATUS_FINISHED;
+                            for (int i = 1; i < processorCount; i++) {
+                                out << "Dobehl bily pesek " << endl << flush;
+                                MPI_Send(&minDegree, 1, MPI_INT, i, MSG_NEW_MINIMUM, MPI_COMM_WORLD);
+
+                            }
+                        }
+
+                        if ((my_rank == 0) && (pesek == BLACK_TOKEN)) {
+                            out << "MASTER PRIJAL BLACK TOKEN" << endl << flush;
                             wasPesekSent = false;
                         }
 
                         if ((my_rank == 0) && (pesek == WHITE_TOKEN)) {
                             processStatus = STATUS_FINISHED;
-                            cout << "MAIN PROCESS STATUS_FINISHED" << endl<<flush;
+                            out << "MAIN PROCESS STATUS_FINISHED" << endl << flush;
                             for (int i = 1; i < processorCount; i++) {
                                 MPI_Send(0, 0, MPI_INT, i, MSG_FINISH, MPI_COMM_WORLD);
                             }
@@ -362,7 +353,7 @@ int main(int argc, char** argv) {
                     case MSG_NEW_MINIMUM:
                         int message;
                         MPI_Recv(&message, 1, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
-                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(NewMin =" << message << "): " << status.MPI_TAG << endl<<flush;
+                        out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") NewMin=" << message <<" " << status.MPI_TAG << endl << flush;
                         //prijmul jsem spodni mez - nic nemuze byt lepsi -> end
                         if (message == lowestPossibleDegree) {
                             processStatus = STATUS_FINISHED;
@@ -373,8 +364,7 @@ int main(int argc, char** argv) {
                     case MSG_FINISH:
                         MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MSG_FINISH, MPI_COMM_WORLD, &status);
                         processStatus = STATUS_FINISHED;
-                        cout << "[MPI_Recv_idleP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil: " << my_rank << " Zprava(Finish): " << status.MPI_TAG << endl<<flush;
-                        cout << "[" << my_rank << "]" << "Skoncil praci" << endl;
+                        out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") Finish " << status.MPI_TAG << endl << flush;
                         break;
                     default:; //chyba("neznamy typ zpravy");
                         break;
@@ -388,25 +378,22 @@ int main(int argc, char** argv) {
             while (!stack->is_empty() && processStatus != STATUS_FINISHED) {
                 counter++;
                 if ((counter % CHECK_MSG_AMOUNT) == 0) {
-                    cout<<my_rank<<"works"<<endl<<flush;
                     MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
                     if (flag) {
-                        cout<<my_rank<<"gotmsg"<<endl<<flush;
-                        //cout << my_rank << "Obshluje zpravu " << status.MPI_TAG << endl<<flush;
+                        //out << my_rank << "Obshluje zpravu " << status.MPI_TAG << endl<<flush;
                         //obdobne se musi obslouzit zpravy
                         switch (status.MPI_TAG) {
                                 //prisla o zadost o praci
                             case MSG_WORK_REQUEST:
                                 MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MSG_WORK_REQUEST, MPI_COMM_WORLD, &status);
-                                cout << "[MPI_Recv_workP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil " << my_rank << " Zprava(PracePozadavek): " << status.MPI_TAG << endl<<flush;
+                                out << "[MPI_RECV_workP] (" << my_rank << "<" << status.MPI_SOURCE << ") WorkRequest " << status.MPI_TAG << endl << flush;
                                 //nebudeme posilat praci, kdyz sam mam malo
                                 //TODO tohle taky rozmyslet, zda by to optimalizacne slo udelat lepe
                                 if (stack->getSize() > 2) {
                                     StackItem* item = stack->popLast();
-                                    //cout << *item << endl<<flush;
                                     data = item->serialize();
                                     MPI_Send(data, data[0] + 1, MPI_INT, status.MPI_SOURCE, MSG_WORK_SENT, MPI_COMM_WORLD);
-                                    cout << "[MPI_SEND_workP]" << "Odesilatel" << my_rank << " komu: " << status.MPI_SOURCE << "Kod(NoWorkSent = " << *item << " ):" << MSG_WORK_SENT << endl<<flush;
+                                    out << "[MPI_SEND_workP] (" <<  my_rank << ">" << status.MPI_SOURCE << ") WorkSent=" << *item << MSG_WORK_SENT << endl << flush;
                                     //ADUV 2 Jestliže procesor Pi pošle práci procesoru Pj, kde i>j, pak Pi nastaví svou barvu na B. 
                                     if (my_rank > status.MPI_SOURCE) {
                                         color = BLACK_PROCESS;
@@ -414,30 +401,29 @@ int main(int argc, char** argv) {
                                 } else {
                                     //sorry neni prace :P
                                     MPI_Send(0, 0, MPI_INT, status.MPI_SOURCE, MSG_WORK_NOWORK, MPI_COMM_WORLD);
-                                    cout << "[MPI_SEND_workP]" << "Odesilatel" << my_rank << " komu: " << status.MPI_SOURCE << "Kod(NoWork):" << MSG_WORK_NOWORK << endl<<flush;
+                                    out << "[MPI_SEND_workP] (" <<  my_rank << ">" << status.MPI_SOURCE << ") NoWork " << MSG_WORK_NOWORK << endl << flush;
                                 }
                                 break;
                             case MSG_NEW_MINIMUM:
                                 int message;
 
                                 MPI_Recv(&message, 1, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
-                                cout << "[MPI_Recv_workP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil " << my_rank << " Zprava(Min = " << message << " ): " << status.MPI_TAG << endl<<flush;
+                                out << "[MPI_RECV_workP] (" << my_rank << "<" << status.MPI_SOURCE << ") NewMin=" << message << " " << status.MPI_TAG << endl << flush;
 
                                 if (message == lowestPossibleDegree) {
                                     processStatus = STATUS_FINISHED;
                                 } else if (message < minDegree) {
                                     minDegree = message;
-                                    cout<<my_rank<<"ulozeno min:"<<minDegree<<endl<<flush;
                                 }
                                 break;
                             case MSG_FINISH:
                                 MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MSG_FINISH, MPI_COMM_WORLD, &status);
-                                cout << "[MPI_Recv_workP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil " << my_rank << " Zprava(Finish): " << status.MPI_TAG << endl<<flush;
+                                out << "[MPI_RECV_workP] (" << my_rank << "<" << status.MPI_SOURCE << ") Finish " << status.MPI_TAG << endl << flush;
                                 processStatus = STATUS_FINISHED;
                                 break;
                             case MSG_TOKEN:
                                 MPI_Recv(&pesek, 1, MPI_INT, MPI_ANY_SOURCE, MSG_TOKEN, MPI_COMM_WORLD, &status);
-                                cout << "[MPI_Recv_workP] " << "Odesilatel: " << status.MPI_SOURCE << " Cil " << my_rank << " Zprava(Pesek): " << status.MPI_TAG << endl<<flush;
+                                out << "[MPI_RECV_workP] (" << my_rank << "<" << status.MPI_SOURCE << ") Pesek " << status.MPI_TAG << endl << flush;
                                 if (my_rank == 0) {
                                     wasPesekSent = false;
                                 }
@@ -451,7 +437,7 @@ int main(int argc, char** argv) {
                                     processStatus = STATUS_FINISHED;
                                     for (int i = 1; i < processorCount; i++) {
 
-                                        //cout << "Odesilam New minimum " << minDegree << " do " << i << endl<<flush;
+                                        //out << "Odesilam New minimum " << minDegree << " do " << i << endl<<flush;
                                         MPI_Send(&minDegree, 1, MPI_INT, i, MSG_NEW_MINIMUM, MPI_COMM_WORLD);
 
                                     }
@@ -462,9 +448,6 @@ int main(int argc, char** argv) {
 
                     }
                 }
-
-                /*if (my_rank == 1|| my_rank == 2 || my_rank==3 || my_rank == 4)
-                cout << my_rank << " pracuje" << endl<<flush;*/
 
                 /*DFS Start*/
                 //vemu si cestu neboli vraceni se o uroven zpet
@@ -509,24 +492,24 @@ int main(int argc, char** argv) {
                                 }
                                 if (minDegree == lowestPossibleDegree) {
                                     processStatus = STATUS_FINISHED;
-                                    cout << "[" << my_rank << "]" << "Nalezl spodni mez" << endl<<flush;
-                                    cout << "nalezena nejmensi mez" << endl<<flush;
+                                    out << "[" << my_rank << "]" << "Nalezl spodni mez" << endl << flush;
+                                    out << "nalezena nejmensi mez" << endl << flush;
                                     for (int i = 0; i < processorCount; i++) {
                                         if (i != my_rank) {
                                             MPI_Send(0, 0, MPI_INT, i, MSG_FINISH, MPI_COMM_WORLD);
-                                            cout << "[MPI_SEND] odesilatel" << my_rank << " komu: " << i << "Kod(Finish):" << MSG_FINISH << endl<<flush;
+                                            out << "[MPI_SEND] (" <<  my_rank << ">" << i << ") Finish" <<  MSG_FINISH << endl << flush;
                                         }
                                     }
                                     break;
                                 }
                                 minSpanningTree = aaa;
-                                cout << "[" << my_rank << "]" << "Nasel kostru" << *aaa << " | stupne: " << minDegree << endl<<flush;
+                                out << "[" << my_rank << "]" << "Nasel kostru: " << *aaa << " | stupne: " << minDegree << endl << flush;
                                 minDegreeInited = true;
                                 //Jelikoz jsem nasel nejlepsi minimum, tak ho odeslu vsem procesorum
                                 for (int i = 0; i < processorCount; i++) {
                                     if (i != my_rank) {
                                         MPI_Send(&minDegree, 1, MPI_INT, i, MSG_NEW_MINIMUM, MPI_COMM_WORLD);
-                                        cout << "[MPI_SEND] odesilatel" << my_rank << " komu: " << i << "Kod(NewMin):" << MSG_NEW_MINIMUM << endl<<flush;
+                                        out << "[MPI_SEND] (" <<  my_rank << ">" << i << ") NewMin="<< minDegree << " " <<  MSG_NEW_MINIMUM << endl << flush;
                                     }
                                 }
                             } else {
@@ -543,7 +526,7 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
-                if(minDegree==lowestPossibleDegree){
+                if (minDegree == lowestPossibleDegree) {
                     break;
                 }
                 delete path;
@@ -560,16 +543,19 @@ int main(int argc, char** argv) {
         time2 = MPI_Wtime();
 
         double totalTime = time2 - time1;
-        cout << "Celkovy cas vypoctu: " << totalTime << endl;
+        out << "Celkovy cas vypoctu: " << totalTime << endl;
         printf("Spotrebovany cas je %f.\n", totalTime);
     }
 
     //vysledky
     if (minSpanningTree != NULL) {
-        cout << my_rank << " | " << *minSpanningTree << " | " << minDegree << endl<<flush;
+        out << my_rank << " | " << *minSpanningTree << " | " << minDegree << endl << flush;
 
     }
-
+#ifdef LOG
+    out.close();
+#endif
+    
     MPI_Finalize();
     return 0;
 }
