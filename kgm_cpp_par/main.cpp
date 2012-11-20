@@ -111,7 +111,8 @@ int main(int argc, char** argv) {
     int minDegree = 0;
     /*Spodni mez stupne kostry - 2*/
     int lowestPossibleDegree = 2;
-
+    /*ukládání minima při příjmu*/
+    StackItem* temp15;
     /*Inicializace MPI promennych*/
     /*Cislo procesu - 0 je master*/
     int my_rank;
@@ -264,7 +265,7 @@ int main(int argc, char** argv) {
                 int next_rank = (my_rank + 1) % processorCount;
                 MPI_Send(&pesek, 1, MPI_INT, next_rank, MSG_TOKEN, MPI_COMM_WORLD);
                 out << "[MPI_SEND_idleP] (" << my_rank << ">" << next_rank << ") Pesek=" << ((pesek == BLACK_TOKEN) ? "black" : "white") << MSG_TOKEN << endl << flush;
-                
+
                 color = WHITE_PROCESS;
                 pesek = 0;
             }
@@ -338,11 +339,19 @@ int main(int argc, char** argv) {
                         break;
                         /*Prislo nove minimum*/
                     case MSG_NEW_MINIMUM:
-                        int message;
-                        MPI_Recv(&message, 1, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
-                        out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") NewMin=" << message << " " << status.MPI_TAG << endl << flush;
-                        if (minDegree == 0 || message < minDegree) {
-                            minDegree = message;
+                        MPI_Recv(data, maxDataLenght, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
+                        //deseralizuji
+                        temp15 = new StackItem(data, edges, NUMBER_OF_VERTEX);
+                        out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") NewMin=" << temp15->getMaxDegree() << " " << *temp15 << " " << status.MPI_TAG << endl << flush;
+                        if (minDegree == 0 || temp15->getMaxDegree() < minDegree) {
+                            if (minSpanningTree != NULL) {
+                                delete minSpanningTree;
+                            }
+                            minSpanningTree = temp15;
+                            minDegree = minSpanningTree->getMaxDegree();
+                            minDegreeInited = true;
+                        } else {
+                            delete temp15;
                         }
                         break;
                     case MSG_FINISH:
@@ -380,6 +389,8 @@ int main(int argc, char** argv) {
                                     data = item->serialize();
                                     MPI_Send(data, data[0] + 1, MPI_INT, status.MPI_SOURCE, MSG_WORK_SENT, MPI_COMM_WORLD);
                                     out << "[MPI_SEND_workP] (" << my_rank << ">" << status.MPI_SOURCE << ") WorkSent=" << *item << MSG_WORK_SENT << endl << flush;
+                                    delete item;
+                                    item = NULL;
                                     //ADUV 2 Jestliže procesor Pi pošle práci procesoru Pj, kde i>j, pak Pi nastaví svou barvu na B. 
                                     if (my_rank > status.MPI_SOURCE) {
                                         color = BLACK_PROCESS;
@@ -391,12 +402,19 @@ int main(int argc, char** argv) {
                                 }
                                 break;
                             case MSG_NEW_MINIMUM:
-                                int message;
-
-                                MPI_Recv(&message, 1, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
-                                out << "[MPI_RECV_workP] (" << my_rank << "<" << status.MPI_SOURCE << ") NewMin=" << message << " " << status.MPI_TAG << endl << flush;
-                                if (minDegree==0 || message < minDegree) {
-                                    minDegree = message;
+                                MPI_Recv(data, maxDataLenght, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
+                                //deseralizuji
+                                temp15 = new StackItem(data, edges, NUMBER_OF_VERTEX);
+                                out << "[MPI_RECV_workP] (" << my_rank << "<" << status.MPI_SOURCE << ") NewMin=" << temp15->getMaxDegree() << " " << *temp15 << " " << status.MPI_TAG << endl << flush;
+                                if (minDegree == 0 || temp15->getMaxDegree() < minDegree) {
+                                    if (minSpanningTree != NULL) {
+                                        delete minSpanningTree;
+                                    }
+                                    minSpanningTree = temp15;
+                                    minDegree = minSpanningTree->getMaxDegree();
+                                    minDegreeInited = true;
+                                } else {
+                                    delete temp15;
                                 }
                                 break;
                             case MSG_FINISH:
@@ -475,10 +493,11 @@ int main(int argc, char** argv) {
                                 out << "[" << my_rank << "]" << "Nasel kostru: " << *aaa << " | stupne: " << aaa->getMaxDegree() << endl << flush;
                                 minDegreeInited = true;
                                 //Jelikoz jsem nasel nejlepsi minimum, tak ho odeslu vsem procesorum
+                                data = minSpanningTree->serialize();
                                 for (int i = 0; i < processorCount; i++) {
                                     if (i != my_rank) {
-                                        MPI_Send(&minDegree, 1, MPI_INT, i, MSG_NEW_MINIMUM, MPI_COMM_WORLD);
-                                        out << "[MPI_SEND] (" << my_rank << ">" << i << ") NewMin=" << minDegree << " " << MSG_NEW_MINIMUM << endl << flush;
+                                        MPI_Send(data, data[0] + 1, MPI_INT, i, MSG_NEW_MINIMUM, MPI_COMM_WORLD);
+                                        out << "[MPI_SEND] (" << my_rank << ">" << i << ") NewMin=" << minDegree << " " << *minSpanningTree << " " << MSG_NEW_MINIMUM << endl << flush;
                                     }
                                 }
                             } else {
@@ -521,7 +540,7 @@ int main(int argc, char** argv) {
     }
 
     //vysledky
-    if (minSpanningTree != NULL) { 
+    if (minSpanningTree != NULL && my_rank==0 || minDegree==lowestPossibleDegree) {
         cout << endl << "[" << my_rank << "] RESULT " << endl << "- degree: " << minSpanningTree->getMaxDegree() << endl << "- spanning tree: " << *minSpanningTree << endl << endl << flush;
     }
 #ifdef LOG
