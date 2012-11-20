@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
     /*Prozatimni kostra s nejmensim stupnem*/
     StackItem* minSpanningTree = NULL;
     /*Nejmensi nalezeny stupen kostry*/
-    int minDegree=0;
+    int minDegree = 0;
     /*Spodni mez stupne kostry - 2*/
     int lowestPossibleDegree = 2;
 
@@ -273,9 +273,9 @@ int main(int argc, char** argv) {
 
                     wasRequestedForWork = true;
                 }
-                processToAskForWork = (processToAskForWork+1) % processorCount;
+                processToAskForWork = (processToAskForWork + 1) % processorCount;
             }
-            
+
 
             //i v IDLE stavu musim obslouzit prichozi zpravy - zejmena peska a prichozi praci
             MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
@@ -317,7 +317,7 @@ int main(int argc, char** argv) {
                          * Jakmile se Pi stane idle, pošle peška po kružnici procesoru Pi+1 a nastaví svoji barvu na W. 
                          */
                         MPI_Recv(&pesek, 1, MPI_INT, status.MPI_SOURCE, MSG_TOKEN, MPI_COMM_WORLD, &status);
-                        out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") Pesek="<< ((pesek==BLACK_TOKEN)?"black":"white") << status.MPI_TAG << endl << flush;
+                        out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") Pesek=" << ((pesek == BLACK_TOKEN) ? "black" : "white") << status.MPI_TAG << endl << flush;
 
                         if ((my_rank == 0) && (pesek == BLACK_TOKEN)) {
                             //přišel černý token, vynulujeme info poslání peška (měl by se při stavu idle poslat nový bílý pešek
@@ -325,10 +325,10 @@ int main(int argc, char** argv) {
                         } else if ((my_rank == 0) && (pesek == WHITE_TOKEN)) {
                             //přišel bílý pešek, končíme práci
                             processStatus = STATUS_FINISHED;
-                            out << "[" << my_rank<< "] Dobehl bily pesek " << endl << flush;
+                            out << "[" << my_rank << "] Dobehl bily pesek " << endl << flush;
                             for (int i = 1; i < processorCount; i++) {
                                 MPI_Send(0, 0, MPI_INT, i, MSG_FINISH, MPI_COMM_WORLD);
-                                out << "[MPI_SEND_idleP] (" <<  my_rank << ">" << i << ") Finish " << MSG_FINISH << endl << flush;
+                                out << "[MPI_SEND_idleP] (" << my_rank << ">" << i << ") Finish " << MSG_FINISH << endl << flush;
                             }
                         }
                         break;
@@ -337,11 +337,7 @@ int main(int argc, char** argv) {
                         int message;
                         MPI_Recv(&message, 1, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
                         out << "[MPI_RECV_idleP] (" << my_rank << "<" << status.MPI_SOURCE << ") NewMin=" << message << " " << status.MPI_TAG << endl << flush;
-                        //prijmul jsem spodni mez - nic nemuze byt lepsi -> end
-                        /*if (message == lowestPossibleDegree) {
-                            processStatus = STATUS_FINISHED;
-                        } */
-                        if (message < minDegree) {
+                        if (minDegree == 0 || message < minDegree) {
                             minDegree = message;
                         }
                         break;
@@ -372,7 +368,7 @@ int main(int argc, char** argv) {
                                 MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, MSG_WORK_REQUEST, MPI_COMM_WORLD, &status);
                                 out << "[MPI_RECV_workP] (" << my_rank << "<" << status.MPI_SOURCE << ") WorkRequest " << status.MPI_TAG << endl << flush;
                                 //out << "[" << my_rank << "] Stack: " << *stack << endl << flush;
-                            
+
                                 //nebudeme posilat praci, kdyz sam mam malo
                                 //TODO tohle taky rozmyslet, zda by to optimalizacne slo udelat lepe
                                 if (stack->getSize() > 2) {
@@ -395,11 +391,7 @@ int main(int argc, char** argv) {
 
                                 MPI_Recv(&message, 1, MPI_INT, MPI_ANY_SOURCE, MSG_NEW_MINIMUM, MPI_COMM_WORLD, &status);
                                 out << "[MPI_RECV_workP] (" << my_rank << "<" << status.MPI_SOURCE << ") NewMin=" << message << " " << status.MPI_TAG << endl << flush;
-                                /*
-                                if (message == lowestPossibleDegree) {
-                                    processStatus = STATUS_FINISHED;
-                                } else */
-                                if (message < minDegree) {
+                                if (minDegree==0 || message < minDegree) {
                                     minDegree = message;
                                 }
                                 break;
@@ -410,7 +402,7 @@ int main(int argc, char** argv) {
                                 break;
                             case MSG_TOKEN:
                                 MPI_Recv(&pesek, 1, MPI_INT, MPI_ANY_SOURCE, MSG_TOKEN, MPI_COMM_WORLD, &status);
-                                out << "[MPI_RECV_workP] (" << my_rank << "<" << status.MPI_SOURCE << ") Pesek="<<((pesek==BLACK_TOKEN)?"black":"white") << status.MPI_TAG << endl << flush;
+                                out << "[MPI_RECV_workP] (" << my_rank << "<" << status.MPI_SOURCE << ") Pesek=" << ((pesek == BLACK_TOKEN) ? "black" : "white") << status.MPI_TAG << endl << flush;
                                 if (my_rank == 0) {
                                     wasPesekSent = false;
                                 }
@@ -444,7 +436,7 @@ int main(int argc, char** argv) {
                         //pridam zkoumanou hranu do cesty
                         aaa->addEdge(e);
                         //out << "[" << my_rank << "] Testuji: " << *aaa << " | " << aaa->getMaxDegree() << endl << flush;
-                            
+
                         //zkoumam zda dana cesta nema vetsi stupen nez dosavadni nalezeny
                         if (minDegreeInited && aaa->getMaxDegree() > minDegree) {
                             //pokud ano, tak orezavam :)
@@ -456,8 +448,8 @@ int main(int argc, char** argv) {
                         if (aaa->pathSize() == dfsK) {
                             out << "[" << my_rank << "] Adept: " << *aaa << " | " << aaa->getMaxDegree() << "|" << minDegree << endl << flush;
                             //pokud je menšího stupně zapamatuji si
-                            if (minSpanningTree==NULL|| minDegree==0 || aaa->getMaxDegree() < minDegree) {
-                                if (minDegree==0 ||minDegree > aaa->getMaxDegree()) {
+                            if (minSpanningTree == NULL || minDegree == 0 || aaa->getMaxDegree() < minDegree) {
+                                if (minDegree == 0 || minDegree > aaa->getMaxDegree()) {
                                     minDegree = aaa->getMaxDegree();
                                 }
                                 if (minSpanningTree != NULL) {
@@ -499,7 +491,7 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
-                        
+
                 if (minDegree == lowestPossibleDegree) {
                     break;
                 }
@@ -507,8 +499,8 @@ int main(int argc, char** argv) {
                 path = NULL;
                 /*DFS End*/
             }//end of while
-            if(processStatus!=STATUS_FINISHED){
-                processStatus=STATUS_IDLE;
+            if (processStatus != STATUS_FINISHED) {
+                processStatus = STATUS_IDLE;
             }
         }//end of main while
 
