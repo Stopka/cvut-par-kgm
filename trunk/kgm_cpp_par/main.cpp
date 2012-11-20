@@ -253,14 +253,18 @@ int main(int argc, char** argv) {
                 color = WHITE_PROCESS;
                 pesek = WHITE_TOKEN;
                 MPI_Send(&pesek, 1, MPI_INT, 1, MSG_TOKEN, MPI_COMM_WORLD);
+                out << "[MPI_SEND_idleP] (" << my_rank << ">" << 1 << ") Pesek=" << ((pesek == BLACK_TOKEN) ? "black" : "white") << MSG_TOKEN << endl << flush;
                 wasPesekSent = true;
                 //ADUV bod 3
             } else if ((pesek != 0) && (my_rank != 0)) {
+                //jsem černý proces, obarvím token a pošlu sousedovi
                 if (color == BLACK_PROCESS) {
                     pesek = BLACK_TOKEN;
                 }
                 int next_rank = (my_rank + 1) % processorCount;
                 MPI_Send(&pesek, 1, MPI_INT, next_rank, MSG_TOKEN, MPI_COMM_WORLD);
+                out << "[MPI_SEND_idleP] (" << my_rank << ">" << next_rank << ") Pesek=" << ((pesek == BLACK_TOKEN) ? "black" : "white") << MSG_TOKEN << endl << flush;
+                
                 color = WHITE_PROCESS;
                 pesek = 0;
             }
@@ -446,7 +450,7 @@ int main(int argc, char** argv) {
                         }
                         //pokud mam narok na kostru
                         if (aaa->pathSize() == dfsK) {
-                            out << "[" << my_rank << "] Adept: " << *aaa << " | " << aaa->getMaxDegree() << "|" << minDegree << endl << flush;
+                            //out << "[" << my_rank << "] Adept: " << *aaa << " | " << aaa->getMaxDegree() << "|" << minDegree << endl << flush;
                             //pokud je menšího stupně zapamatuji si
                             if (minSpanningTree == NULL || minDegree == 0 || aaa->getMaxDegree() < minDegree) {
                                 if (minDegree == 0 || minDegree > aaa->getMaxDegree()) {
