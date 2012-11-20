@@ -130,5 +130,6 @@ StackItem::StackItem(int* id_array, List* edges, int NUMBER_OF_VERTEX) {
     this->vertex = new int[NUMBER_OF_VERTEX];
     for (int i = 1; i < (id_array[0] + 1); i++) {
         this->addEdge(edges->findById(id_array[i]));
+        this->countDegree();
     }
 }
