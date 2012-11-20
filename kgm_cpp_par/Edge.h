@@ -22,6 +22,7 @@ public:
     void setId(int id);
     int getStart() const;
     void setStart(int start);
+    bool connectsVertex(int v);
     bool operator==(const Edge& e) const;
     bool operator<(const Edge& e) const;
     bool operator>(const Edge& e) const;
