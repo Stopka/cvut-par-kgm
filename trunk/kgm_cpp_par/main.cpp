@@ -443,8 +443,6 @@ int main(int argc, char** argv) {
                         aaa = new StackItem(*path);
                         //pridam zkoumanou hranu do cesty
                         aaa->addEdge(e);
-                        //spocitam jeji stupen s novou hranou
-                        aaa->countDegree();
                         //out << "[" << my_rank << "] Testuji: " << *aaa << " | " << aaa->getMaxDegree() << endl << flush;
                             
                         //zkoumam zda dana cesta nema vetsi stupen nez dosavadni nalezeny
@@ -456,7 +454,7 @@ int main(int argc, char** argv) {
                         }
                         //pokud mam narok na kostru
                         if (aaa->pathSize() == dfsK) {
-                            out << "[" << my_rank << "] Adept: " << *aaa << " | " << aaa->getMaxDegree() << endl << flush;
+                            out << "[" << my_rank << "] Adept: " << *aaa << " | " << aaa->getMaxDegree() << "|" << minDegree << endl << flush;
                             //pokud je menšího stupně zapamatuji si
                             if (minSpanningTree==NULL|| minDegree==0 || aaa->getMaxDegree() < minDegree) {
                                 if (minDegree==0 ||minDegree > aaa->getMaxDegree()) {
@@ -509,7 +507,9 @@ int main(int argc, char** argv) {
                 path = NULL;
                 /*DFS End*/
             }//end of while
-            processStatus=STATUS_IDLE;
+            if(processStatus!=STATUS_FINISHED){
+                processStatus=STATUS_IDLE;
+            }
         }//end of main while
 
     }

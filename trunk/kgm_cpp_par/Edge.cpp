@@ -22,6 +22,10 @@ Edge::Edge(int start, int end, int id) {
 Edge::~Edge() {
 }
 
+bool Edge::connectsVertex(int v){
+    return this->start==v||this->end==v;
+}
+
 int Edge::getEnd() const {
     return end;
 }
