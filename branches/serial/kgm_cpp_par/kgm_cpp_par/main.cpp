@@ -18,6 +18,7 @@ const char* file_name = "graph.txt";
  * 
  */
 int main(int argc, char** argv) {
+    clock_t time1, time2 = 0;
     /*
     int myrank, nprocs;
 
@@ -28,25 +29,25 @@ int main(int argc, char** argv) {
     printf("Hello from processor %d of %d\n", myrank, nprocs);
 
     MPI_Finalize();
-    */
-    int NUMBER_OF_VERTEX=0;
+     */
+    int NUMBER_OF_VERTEX = 0;
     ifstream file;
     string line;
     file.open(file_name);
-    file>>NUMBER_OF_VERTEX;
-    cout<<NUMBER_OF_VERTEX<<endl;
+    file >> NUMBER_OF_VERTEX;
+    cout << NUMBER_OF_VERTEX << endl;
     getline(file, line);
     int** arr = new int*[NUMBER_OF_VERTEX];
-    for(int row=0;row<NUMBER_OF_VERTEX;row++){
+    for (int row = 0; row < NUMBER_OF_VERTEX; row++) {
         arr[row] = new int[NUMBER_OF_VERTEX];
         getline(file, line);
-        for(int col=0;col<NUMBER_OF_VERTEX;col++){
-            arr[row][col]=line[col]-'0';
-            cout<<arr[row][col];
+        for (int col = 0; col < NUMBER_OF_VERTEX; col++) {
+            arr[row][col] = line[col] - '0';
+            cout << arr[row][col];
         }
-        cout<<endl;
+        cout << endl;
     }
-    int dfsK=NUMBER_OF_VERTEX-1;
+    int dfsK = NUMBER_OF_VERTEX - 1;
     /*
     int NUMBER_OF_VERTEX = 6;
     int dfsK = 5;
@@ -68,6 +69,7 @@ int main(int argc, char** argv) {
      * Pokud budes zkouset jine grafy, tak se musi upravit konstanta na pocet vrcholu!!!!
      * a samozrejme parametr k u metody DFS
      */
+    time1 = clock();
     Main* app = new Main(NUMBER_OF_VERTEX);
     app->loadEdges(arr);
 
@@ -80,5 +82,8 @@ int main(int argc, char** argv) {
         {1, 1, 0}});
     //app2.DFS(2);
      */
+    time2 = clock();
+    double totalTime = (time2 - time1)/CLOCKS_PER_SEC;
+    cout << "Celkovy cas vypoctu: " << totalTime << endl;
     return 0;
 }
