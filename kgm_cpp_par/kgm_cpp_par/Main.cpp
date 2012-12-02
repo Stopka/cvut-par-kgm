@@ -57,7 +57,6 @@ void Main::DFS(int k) {
                 // vytvorim novou cestou, kterou pozdeji ulozim na zasobnik
                 //predam ji v konstruktoru dosavadni cestu
                 aaa = new StackItem(*path);
-                StackItem* bbb=new StackItem(aaa->serialize(),edges,NUMBER_OF_VERTEX);
                 //pridam zkoumanou hranu do cesty
                 aaa->addEdge(e);
                 //spocitam jeji stupen s novou hranou
