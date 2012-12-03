@@ -9,30 +9,30 @@
 #include "StackItem.h"
 
 List::List() {
-    first_node=NULL;
-    last_node=NULL;
-    size=0;
+    first_node = NULL;
+    last_node = NULL;
+    size = 0;
 }
 
 List::List(const List& orig) {
-    first_node=NULL;
-    last_node=NULL;
-    size=0;
-    ListNode* node=orig.first_node;
-    ListNode* prev_node=NULL;
+    first_node = NULL;
+    last_node = NULL;
+    size = 0;
+    ListNode* node = orig.first_node;
+    ListNode* prev_node = NULL;
     ListNode* new_node;
-    while(node!=NULL){
-        new_node=new ListNode();
-        if(first_node==NULL){
-            first_node=new_node;
-        }else{
-            prev_node->next=new_node;
+    while (node != NULL) {
+        new_node = new ListNode();
+        if (first_node == NULL) {
+            first_node = new_node;
+        } else {
+            prev_node->next = new_node;
         }
-        new_node->content=node->content;
-        new_node->next=NULL;
-        last_node=new_node;
-        node=node->next;
-        prev_node=new_node;
+        new_node->content = node->content;
+        new_node->next = NULL;
+        last_node = new_node;
+        node = node->next;
+        prev_node = new_node;
         size++;
     }
 }
@@ -42,9 +42,9 @@ List::~List() {
 }
 
 void List::add(Edge* item) {
-    ListNode* node = new ListNode;
+    ListNode* node = new ListNode();
     node->content = item;
-    if (last_node == 0) {
+    if (last_node == NULL) {
         first_node = node;
     } else {
         last_node->next = node;
@@ -58,14 +58,14 @@ int List::getSize() {
 }
 
 void List::clear() {
-    while (first_node != NULL) {
+    while (size > 0) {
         remove(first_node->content);
     }
 }
 
 bool List::isIn(Edge* item) {
     ListNode* node = first_node;
-    while (node != 0) {
+    while (node != NULL) {
         if (node->content == item) {
             return true;
         }
@@ -90,7 +90,7 @@ ostream& operator<<(ostream& os, const List& s) {
     ListNode* node = s.first_node;
     bool inter = false;
     os << "[";
-    while (node != 0) {
+    while (node != NULL) {
         if (inter) {
             os << "; ";
         }
@@ -103,11 +103,11 @@ ostream& operator<<(ostream& os, const List& s) {
 }
 
 void List::remove(Edge* edge) {
-    ListNode* prev = 0;
+    ListNode* prev = NULL;
     ListNode* node = first_node;
-    while (node != 0) {
+    while (node != NULL) {
         if (node->content == edge) {
-            if (prev != 0) {
+            if (prev != NULL) {
                 prev->next = node->next;
             } else {
                 first_node = node->next;
@@ -131,24 +131,24 @@ void List::removeLast() {
 Edge* List::getItem(int index) {
     ListNode* node = first_node;
     for (int i = index; i > 0; i--) {
-        if (node == 0) {
-            return 0;
+        if (node == NULL) {
+            return NULL;
         }
         node = node->next;
     }
-    if (node == 0) {
-        return 0;
+    if (node == NULL) {
+        return NULL;
     }
     return node->content;
 }
 
-Edge* List::findById(int id){
-ListNode* node=first_node;
-while(node!=NULL){
-if(node->content->getId()==id){
-return node->content;
-}
-node=node->next;
-}
-return NULL;
+Edge* List::findById(int id) {
+    ListNode* node = first_node;
+    while (node != NULL) {
+        if (node->content->getId() == id) {
+            return node->content;
+        }
+        node = node->next;
+    }
+    return NULL;
 }

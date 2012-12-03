@@ -26,8 +26,11 @@
         <runcommandpicklist>
           <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
           <runcommandpicklistitem>/usr/bin/mpiexec -n 5 "${OUTPUT_PATH}"</runcommandpicklistitem>
+          <runcommandpicklistitem>/usr/bin/mpirun --debug /usr/bin/mpiexec -n 5 "${OUTPUT_PATH}"</runcommandpicklistitem>
+          <runcommandpicklistitem>/usr/bin/mpirun -n 1 "${OUTPUT_PATH}"</runcommandpicklistitem>
+          <runcommandpicklistitem>/usr/bin/mpirun -n 5 "${OUTPUT_PATH}"</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>/usr/bin/mpiexec -n 5 "${OUTPUT_PATH}"</runcommand>
+        <runcommand>/usr/bin/mpirun -n 5 "${OUTPUT_PATH}"</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

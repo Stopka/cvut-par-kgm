@@ -346,10 +346,10 @@ int main(int argc, char** argv) {
                         if (minDegree == 0 || temp15->getMaxDegree() < minDegree) {
                             if (minSpanningTree != NULL) {
                                 delete minSpanningTree;
+                                minSpanningTree=NULL;
                             }
                             minSpanningTree = temp15;
                             minDegree = minSpanningTree->getMaxDegree();
-                            minDegreeInited = true;
                         } else {
                             delete temp15;
                         }
@@ -386,7 +386,7 @@ int main(int argc, char** argv) {
                                 //TODO tohle taky rozmyslet, zda by to optimalizacne slo udelat lepe
                                 if (stack->getSize() > 2) {
                                     StackItem* item = stack->popLast();
-                                    data = item->serialize();
+                                    data = item->serialize(data);
                                     MPI_Send(data, data[0] + 1, MPI_INT, status.MPI_SOURCE, MSG_WORK_SENT, MPI_COMM_WORLD);
                                     out << "[MPI_SEND_workP] (" << my_rank << ">" << status.MPI_SOURCE << ") WorkSent=" << *item << MSG_WORK_SENT << endl << flush;
                                     delete item;
@@ -409,6 +409,7 @@ int main(int argc, char** argv) {
                                 if (minDegree == 0 || temp15->getMaxDegree() < minDegree) {
                                     if (minSpanningTree != NULL) {
                                         delete minSpanningTree;
+                                        minSpanningTree=NULL;
                                     }
                                     minSpanningTree = temp15;
                                     minDegree = minSpanningTree->getMaxDegree();
@@ -471,9 +472,7 @@ int main(int argc, char** argv) {
                             //out << "[" << my_rank << "] Adept: " << *aaa << " | " << aaa->getMaxDegree() << "|" << minDegree << endl << flush;
                             //pokud je menšího stupně zapamatuji si
                             if (minSpanningTree == NULL || minDegree == 0 || aaa->getMaxDegree() < minDegree) {
-                                if (minDegree == 0 || minDegree > aaa->getMaxDegree()) {
-                                    minDegree = aaa->getMaxDegree();
-                                }
+                                minDegree = aaa->getMaxDegree();
                                 if (minSpanningTree != NULL) {
                                     delete minSpanningTree;
                                     minSpanningTree = NULL;
@@ -490,14 +489,13 @@ int main(int argc, char** argv) {
                                     }
                                     break;
                                 }
-                                out << "[" << my_rank << "]" << "Nasel kostru: " << *aaa << " | stupne: " << aaa->getMaxDegree() << endl << flush;
-                                minDegreeInited = true;
+                                out << "[" << my_rank << "]" << "Nasel kostru: " << *aaa << " | stupne: " << minDegree << endl << flush;
                                 //Jelikoz jsem nasel nejlepsi minimum, tak ho odeslu vsem procesorum
-                                data = minSpanningTree->serialize();
+                                data = minSpanningTree->serialize(data);
                                 for (int i = 0; i < processorCount; i++) {
                                     if (i != my_rank) {
                                         MPI_Send(data, data[0] + 1, MPI_INT, i, MSG_NEW_MINIMUM, MPI_COMM_WORLD);
-                                        out << "[MPI_SEND] (" << my_rank << ">" << i << ") NewMin=" << minDegree << " " << *minSpanningTree << " " << MSG_NEW_MINIMUM << endl << flush;
+                                        out << "[MPI_SEND] (" << my_rank << ">" << i << ") NewMin=" << minSpanningTree->getMaxDegree() << " " << *minSpanningTree << " " << MSG_NEW_MINIMUM << endl << flush;
                                     }
                                 }
                             } else {
@@ -536,7 +534,6 @@ int main(int argc, char** argv) {
 
         double totalTime = time2 - time1;
         cout << "Celkovy cas vypoctu: " << totalTime << endl;
-        printf("Spotrebovany cas je %f.\n", totalTime);
     }
 
     //vysledky

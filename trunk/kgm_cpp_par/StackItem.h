@@ -38,7 +38,7 @@ public:
     List* getPath();
     int* getVertexArray();
     bool operator<(const Edge& e);
-    int* serialize();
+    int* serialize(int* data);
 private:
     List* path;
     int pathDeegre;
