@@ -115,21 +115,20 @@ bool StackItem::operator<(const Edge& e) {
     return false;
 }
 
-int* StackItem::serialize() {
-    int* serMatrix = new int[path->getSize() + 1];
-    serMatrix[0] = path->getSize();
+int* StackItem::serialize(int* data) {
+    data[0] = path->getSize();
     for (int i = 0; i < path->getSize(); i++) {
-        serMatrix[i + 1] = path->getItem(i)->getId();
+        data[i + 1] = path->getItem(i)->getId();
     }
-    return serMatrix;
+    return data;
 }
 
 StackItem::StackItem(int* id_array, List* edges, int NUMBER_OF_VERTEX) {
     this->NUMBER_OF_VERTEX = NUMBER_OF_VERTEX;
     this->path = new List();
     this->vertex = new int[NUMBER_OF_VERTEX];
-    for (int i = 1; i < (id_array[0] + 1); i++) {
+    for (int i = 1; i < (id_array[0] + 1); ++i) {
         this->addEdge(edges->findById(id_array[i]));
-        this->countDegree();
     }
+    this->countDegree();
 }
