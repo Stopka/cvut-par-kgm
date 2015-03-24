@@ -1,0 +1,1 @@
+Semestrální práce na předmět paralelní algoritmy a systémy
